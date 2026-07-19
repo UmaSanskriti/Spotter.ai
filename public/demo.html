@@ -62,8 +62,9 @@
   <script>
     const $ = id => document.getElementById(id);
     const term = $('term');
-    const SPEED = 0.85;          // slightly slower than recorded — reading time matters
-    const CARD_PAUSE = 2600;     // extra hold added after every surfaced card
+    const SPEED = 0.94;          // reading time matters, but keep it moving
+    const CARD_PAUSE = 2340;     // extra hold added after every surfaced card
+    const AUTO_ANSWER_MS = 6200; // if the viewer doesn't touch a card, answer it for them
     let timers = [];
     let seen = 0, surfaced = 0;
 
@@ -142,9 +143,11 @@
               if (!opt.correct) btn.classList.add('wrong');
               const fb = document.createElement('div');
               fb.className = 'mcq-fb ' + (opt.correct ? 'good' : 'bad');
-              fb.textContent = opt.correct
-                ? '✓ Called it — added to your profile.'
-                : '✗ Not quite. The attempt still counts as a rep.';
+              fb.textContent = body.dataset.auto
+                ? '✓ Auto-answered to keep things moving — next one’s yours.'
+                : opt.correct
+                  ? '✓ Called it — added to your profile.'
+                  : '✗ Not quite. The attempt still counts as a rep.';
               body.appendChild(fb);
             };
             body.appendChild(btn);
@@ -164,6 +167,18 @@
           body.appendChild(btn);
         }
         feed.prepend(el);
+
+        // Never stall the show: unanswered cards resolve themselves after a beat.
+        schedule(() => {
+          if (body.dataset.done) return;
+          if (card.options) {
+            body.dataset.auto = '1';
+            const correctIdx = card.options.findIndex(o => o.correct);
+            body.querySelectorAll('.mcq-opt')[correctIdx]?.click();
+          } else {
+            body.querySelector('.reveal-btn')?.click();
+          }
+        }, AUTO_ANSWER_MS);
       }
     }
 
