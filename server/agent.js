@@ -11,7 +11,15 @@
 //   • no key              -> a scripted offline agent, so the demo never depends on the network.
 
 const MODEL = process.env.SPOTTER_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const API_KEY = process.env.GEMINI_API_KEY || '';
+// Same broad key detection as server/gemini.js — AI Studio injects API_KEY, the SDK uses
+// GOOGLE_API_KEY, our docs say GEMINI_API_KEY. First one wins so a fresh deploy just works.
+const API_KEY =
+  process.env.GEMINI_API_KEY ||
+  process.env.API_KEY ||
+  process.env.GOOGLE_API_KEY ||
+  process.env.GOOGLE_GENAI_API_KEY ||
+  process.env.GENAI_API_KEY ||
+  '';
 
 // Same card shape the filter produces, so store.addCard / the client renderer are unchanged.
 const AGENT_SCHEMA = {

@@ -9,7 +9,16 @@ const MODEL_CANDIDATES = [
   'gemini-2.5-flash',
 ].filter(Boolean);
 
-const API_KEY = process.env.GEMINI_API_KEY || '';
+// Accept whatever the host injects. Google AI Studio's app deploy provides the key as
+// API_KEY; the @google/genai SDK convention is GOOGLE_API_KEY; we've documented GEMINI_API_KEY.
+// Take the first one that's set so an AI Studio import "just works" with zero config.
+const API_KEY =
+  process.env.GEMINI_API_KEY ||
+  process.env.API_KEY ||
+  process.env.GOOGLE_API_KEY ||
+  process.env.GOOGLE_GENAI_API_KEY ||
+  process.env.GENAI_API_KEY ||
+  '';
 let pinnedModel = null;
 
 const state = {
