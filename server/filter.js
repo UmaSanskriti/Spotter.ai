@@ -2,9 +2,28 @@
 // "does this matter, and is it above this user's level?"
 // Uses the REST API directly (stable surface, no SDK version surprises).
 
-const MODEL = process.env.SPOTTER_MODEL || 'gemini-3.1-pro';
+// Model candidates tried in order; first one that answers gets pinned for the process lifetime.
+const MODEL_CANDIDATES = [
+  process.env.SPOTTER_MODEL,
+  'gemini-3.1-pro',
+  'gemini-flash-latest',
+  'gemini-2.5-flash',
+].filter(Boolean);
+let pinnedModel = null;
 const API_KEY = process.env.GEMINI_API_KEY || '';
 const CARD_BUDGET_MS = Number(process.env.SPOTTER_CARD_BUDGET_MS || 90_000); // max ~1 card / 90s
+
+// Diagnostics surfaced at /healthz — so a broken deploy tells you *why* from the outside.
+const diag = {
+  geminiKeySet: Boolean(API_KEY),
+  model: null,
+  cardBudgetMs: CARD_BUDGET_MS,
+  filterCalls: 0,
+  cardsSurfaced: 0,
+  suppressed: { budget: 0, belowBar: 0 },
+  lastError: null,
+  lastVerdict: null,
+};
 
 const CARD_SCHEMA = {
   type: 'OBJECT',
@@ -63,11 +82,25 @@ function summarizeEvent(event) {
   return parts.join(' | ') || JSON.stringify(event).slice(0, 400);
 }
 
-async function runFilter(session, event) {
-  if (!API_KEY) return null; // no key configured — ingest still works, cards don't fire
-  if (Date.now() - session.lastCardAt < CARD_BUDGET_MS) return null; // hard budget
+async function callGemini(model, body) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+async function runFilter(session, event) {
+  if (!API_KEY) {
+    diag.lastError = 'GEMINI_API_KEY not set — filter disabled, ingest still works';
+    return null;
+  }
+  if (Date.now() - session.lastCardAt < CARD_BUDGET_MS) {
+    diag.suppressed.budget += 1;
+    return null; // hard budget: max ~1 card per window
+  }
+
   const body = {
     contents: [{ role: 'user', parts: [{ text: buildPrompt(session, event) }] }],
     generationConfig: {
@@ -77,25 +110,42 @@ async function runFilter(session, event) {
     },
   };
 
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    console.error('gemini error', resp.status, (await resp.text()).slice(0, 500));
-    return null;
+  diag.filterCalls += 1;
+  let resp = null;
+  const candidates = pinnedModel ? [pinnedModel] : MODEL_CANDIDATES;
+  for (const model of candidates) {
+    resp = await callGemini(model, body);
+    if (resp.ok) {
+      pinnedModel = model;
+      diag.model = model;
+      break;
+    }
+    const errText = (await resp.text()).slice(0, 300);
+    diag.lastError = `${model}: HTTP ${resp.status} ${errText}`;
+    console.error('gemini error', model, resp.status, errText);
+    if (resp.status !== 404 && resp.status !== 400) break; // only model-name issues fall through
   }
+  if (!resp || !resp.ok) return null;
+
   const data = await resp.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) return null;
+  if (!text) { diag.lastError = 'empty response from model'; return null; }
 
   let card;
-  try { card = JSON.parse(text); } catch { return null; }
+  try { card = JSON.parse(text); } catch { diag.lastError = 'unparseable model output'; return null; }
+
+  diag.lastVerdict = {
+    surface: card.surface, importance: card.importance,
+    above_user_level: card.above_user_level, domain: card.domain, headline: card.headline,
+  };
 
   // The surfacing rule, exactly as designed: surface && importance>=3 && above_user_level.
-  if (!(card.surface && card.importance >= 3 && card.above_user_level)) return null;
+  if (!(card.surface && card.importance >= 3 && card.above_user_level)) {
+    diag.suppressed.belowBar += 1;
+    return null;
+  }
+  diag.cardsSurfaced += 1;
   return card;
 }
 
-module.exports = { runFilter, CARD_SCHEMA };
+module.exports = { runFilter, CARD_SCHEMA, diag };

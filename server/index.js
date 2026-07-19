@@ -5,7 +5,7 @@ const QRCode = require('qrcode');
 
 const store = require('./store');
 const { preFilter } = require('./prefilter');
-const { runFilter } = require('./filter');
+const { runFilter, diag } = require('./filter');
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -113,6 +113,10 @@ app.post('/session/:id/answer', (req, res) => {
   }
   res.json({ ok: true, profile: s.profile });
 });
+
+// ---------- diagnostics ----------
+
+app.get('/healthz', (_req, res) => res.json(diag));
 
 // ---------- replay ----------
 
