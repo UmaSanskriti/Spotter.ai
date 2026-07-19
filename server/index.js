@@ -6,8 +6,8 @@ const QRCode = require('qrcode');
 const store = require('./store');
 const { preFilter } = require('./prefilter');
 const { runFilter, diag } = require('./filter');
-
 const { buildProfile } = require('./profile');
+const { runAgent } = require('./agent');
 
 const app = express();
 app.use(express.json({ limit: '12mb' })); // resume PDFs arrive base64 in JSON
@@ -93,7 +93,7 @@ app.post('/event', async (req, res) => {
     hook: req.query.type || raw.hook_event_name || 'PostToolUse',
     tool: raw.tool_name || raw.tool,
     input: raw.tool_input || raw.input || {},
-    summary: raw.summary,
+    summary: raw.summary || raw.last_assistant_message,
     at: Date.now(),
   };
 
@@ -109,6 +109,33 @@ app.post('/event', async (req, res) => {
     if (card) store.addCard(s, card);
   } catch (err) {
     console.error('filter error', err.message);
+  }
+});
+
+// ---------- built-in agent (side-by-side demo): chat left, cards right ----------
+
+app.post('/agent/chat', async (req, res) => {
+  const id = req.query.session;
+  const s = store.getSession(id);
+  if (!s) return res.status(404).json({ error: 'no such session' });
+
+  const message = String(req.body?.message || '').slice(0, 4000);
+  if (!message) return res.status(400).json({ error: 'empty message' });
+
+  // Count the developer's request + the agent's turn as "actions the agent took", so the
+  // silence counter on the right moves even on turns Spotter stays quiet.
+  store.recordEvent(s, {});
+  store.recordEvent(s, {});
+  store.broadcast(s, { type: 'tick', tool: 'agent', state: store.publicState(s) });
+
+  try {
+    const { reply, cards, live } = await runAgent(s, message, req.body?.history || []);
+    // Surfaced cards flow through the same store as the hook pipeline -> SSE -> right panel.
+    for (const card of cards) store.addCard(s, card);
+    res.json({ reply, cards, live });
+  } catch (err) {
+    console.error('agent error', err.message);
+    res.status(502).json({ error: 'agent_failed', detail: err.message });
   }
 });
 

@@ -1,0 +1,18 @@
+# Replit config — import this repo, add GEMINI_API_KEY as a Secret, press Run.
+run = "npm install && npm start"
+entrypoint = "server/index.js"
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+[env]
+PORT = "8080"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[deployment]
+run = ["npm", "start"]
+deploymentTarget = "cloudrun"
