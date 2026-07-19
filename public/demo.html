@@ -62,7 +62,8 @@
   <script>
     const $ = id => document.getElementById(id);
     const term = $('term');
-    const SPEED = 1.5;           // compress the recorded timeline
+    const SPEED = 0.85;          // slightly slower than recorded — reading time matters
+    const CARD_PAUSE = 2600;     // extra hold added after every surfaced card
     let timers = [];
     let seen = 0, surfaced = 0;
 
@@ -121,7 +122,47 @@
           <h3>${esc(card.headline)}</h3>
           <div class="what">${esc(card.what_happened)}</div>
           <div class="why">${esc(card.why_it_matters)}</div>
-          <div class="q">🤔 ${esc(card.question)}</div>`;
+          <div class="q">🤔 ${esc(card.question)}</div>
+          <div class="q-body"></div>`;
+        const body = el.querySelector('.q-body');
+
+        if (card.options) {
+          // MCQ: click an option, it resolves against the reference answer
+          for (const [n, opt] of card.options.entries()) {
+            const btn = document.createElement('button');
+            btn.className = 'mcq-opt';
+            btn.innerHTML = `<b>${'ABC'[n]}</b> ${esc(opt.text)}`;
+            btn.onclick = () => {
+              if (body.dataset.done) return;
+              body.dataset.done = '1';
+              body.querySelectorAll('.mcq-opt').forEach((b, m) => {
+                b.disabled = true;
+                if (card.options[m].correct) b.classList.add('right');
+              });
+              if (!opt.correct) btn.classList.add('wrong');
+              const fb = document.createElement('div');
+              fb.className = 'mcq-fb ' + (opt.correct ? 'good' : 'bad');
+              fb.textContent = opt.correct
+                ? '✓ Called it — added to your profile.'
+                : '✗ Not quite. The attempt still counts as a rep.';
+              body.appendChild(fb);
+            };
+            body.appendChild(btn);
+          }
+        } else {
+          // think-then-reveal, same as the real session view
+          const btn = document.createElement('button');
+          btn.className = 'reveal-btn';
+          btn.textContent = 'Think, then reveal';
+          btn.onclick = () => {
+            btn.remove();
+            const a = document.createElement('div');
+            a.className = 'reveal-a';
+            a.textContent = card.answer;
+            body.appendChild(a);
+          };
+          body.appendChild(btn);
+        }
         feed.prepend(el);
       }
     }
@@ -129,6 +170,7 @@
     // ---------- the show ----------
     async function play() {
       timers.forEach(clearTimeout); timers = [];
+      $('endscreen')?.remove();
       term.innerHTML = ''; cursorEl = null;
       seen = 0; surfaced = 0; setCounts();
       for (const feedId of ['pc-feed', 'ph-feed']) {
@@ -141,8 +183,9 @@
         termLine('gl-spot', '◉ spotter connected — session 8f3a, streaming to your second screen');
         schedule(() => termLine('gl-think', '✦ Planning: ack fast, verify signatures, process async…'), 900);
 
+        let extra = 0; // every card adds reading time to everything after it
         for (const item of demo.timeline) {
-          const t = 1600 + item.t / SPEED;
+          const t = 1600 + item.t / SPEED + extra;
           if (item.type === 'tick') {
             schedule(() => {
               seen++; setCounts();
@@ -151,6 +194,7 @@
             }, t);
           } else if (item.type === 'card') {
             schedule(() => { seen++; surfaced++; setCounts(); renderCard(item.card); }, t);
+            extra += CARD_PAUSE;
           } else if (item.type === 'status' && item.t > 0) {
             schedule(() => {
               termLine('gl-done', '✦ Done — webhook service ready. 47 actions taken.');
@@ -161,9 +205,31 @@
                 $(feedId).prepend(el);
               }
             }, t);
+            schedule(showEnd, t + 3500);
           }
         }
       });
+    }
+
+    // ---------- end screen: the demo resolves, it never just stops ----------
+    function showEnd() {
+      $('endscreen')?.remove();
+      const end = document.createElement('div');
+      end.className = 'demo-end';
+      end.id = 'endscreen';
+      end.innerHTML = `
+        <div class="demo-end-card glass">
+          <h2>That’s Spotter.</h2>
+          <p>The agent shipped the feature. You walked away knowing five things you didn’t —
+             without losing a minute of work.</p>
+          <div class="demo-end-ctas">
+            <a class="btn btn-primary" href="/onboard.html">Get started — it’s free</a>
+            <button class="btn btn-ghost" id="rewatch">↺ Re-watch demo</button>
+            <a class="btn btn-ghost" href="/onboard.html">Sign in</a>
+          </div>
+        </div>`;
+      document.querySelector('.stage').appendChild(end);
+      end.querySelector('#rewatch').onclick = play;
     }
 
     // ---------- controls ----------

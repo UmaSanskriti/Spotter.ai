@@ -10,47 +10,62 @@
     { "t": 6000,  "type": "tick", "tool": "Write", "label": "Wrote src/webhooks.js" },
     { "t": 7500,  "type": "card", "card": {
       "seq": 1, "importance": 5, "domain": "systems-design", "headline": "Chose a queue over inline processing",
-      "what_happened": "The agent is writing webhook handlers that acknowledge immediately and push work onto a queue, instead of processing the event inside the HTTP request.",
-      "why_it_matters": "Stripe retries webhooks that don't get a fast 2xx — slow inline processing causes timeouts, which causes retries, which causes duplicate side effects. Decoupling receipt from processing is the standard fix.",
-      "question": "Why would processing the payment inside the request handler cause the same payment to be handled twice?",
-      "answer": "Slow processing makes the response miss Stripe's timeout, so Stripe assumes failure and retries — now the same event arrives twice and both get processed."
+      "what_happened": "The webhook now replies instantly and queues the real work for later.",
+      "why_it_matters": "Slow replies make Stripe retry — and retries mean the same payment gets processed twice.",
+      "question": "Why does slow inline processing cause double payments?",
+      "answer": "Stripe times out, assumes failure, and resends the event.",
+      "options": [
+        { "text": "Stripe times out and resends the event", "correct": true },
+        { "text": "The handler runs twice by default", "correct": false },
+        { "text": "Queues duplicate messages", "correct": false }
+      ]
     }},
     { "t": 16000, "type": "tick", "tool": "Read",  "label": "Read Stripe docs snippet" },
     { "t": 17500, "type": "tick", "tool": "Edit",  "label": "Edited src/webhooks.js — signature check" },
     { "t": 19000, "type": "card", "card": {
-      "seq": 2, "importance": 4, "domain": "security", "headline": "Verifying webhook signatures before parsing",
-      "what_happened": "The agent added HMAC signature verification on the raw request body, before JSON parsing, using the webhook signing secret.",
-      "why_it_matters": "Without verification, anyone who finds your endpoint can forge 'payment succeeded' events. The check must run on the raw bytes — parsing first and re-serializing breaks the HMAC.",
-      "question": "Why must the signature be checked against the raw body rather than the parsed JSON?",
-      "answer": "HMAC is computed over exact bytes. Parse-then-stringify can reorder keys or change whitespace, producing different bytes and a false mismatch — so you verify the raw payload."
+      "seq": 2, "importance": 4, "domain": "security", "headline": "Verify the signature before parsing",
+      "what_happened": "Every webhook is HMAC-checked against the raw bytes before anything reads it.",
+      "why_it_matters": "Without this, anyone who finds your URL can fake a 'payment succeeded'.",
+      "question": "Why check the raw body instead of the parsed JSON?",
+      "answer": "HMAC is computed over exact bytes — re-serialized JSON gives different bytes and a false mismatch."
     }},
     { "t": 27000, "type": "tick", "tool": "Bash",  "label": "npm test — 2 failing" },
     { "t": 28500, "type": "tick", "tool": "Edit",  "label": "Edited src/queue.js — retry logic" },
     { "t": 30000, "type": "tick", "tool": "Bash",  "label": "npm test — all passing" },
     { "t": 31500, "type": "card", "card": {
-      "seq": 3, "importance": 4, "domain": "async-and-queues", "headline": "Retries use exponential backoff with jitter",
-      "what_happened": "Failed jobs are retried at 1s, 2s, 4s, 8s — with a random jitter added to each delay.",
-      "why_it_matters": "Fixed-interval retries from many failed jobs land at the same instant and re-overwhelm the recovering downstream — a thundering herd. Jitter spreads the retries out; backoff gives the failure time to clear.",
-      "question": "If 500 jobs fail at once, what goes wrong with a plain 'retry every 5 seconds' rule?",
-      "answer": "All 500 retry simultaneously every 5 seconds, hammering the recovering service in synchronized waves — jitter desynchronizes them."
+      "seq": 3, "importance": 4, "domain": "async-and-queues", "headline": "Retries back off — with jitter",
+      "what_happened": "Failed jobs retry at 1s, 2s, 4s, 8s, each nudged by a random delay.",
+      "why_it_matters": "500 jobs retrying in sync would hammer the service that's trying to recover.",
+      "question": "What breaks with a plain 'retry every 5s' rule?",
+      "answer": "Everything retries at the same instant, in waves — jitter spreads them out.",
+      "options": [
+        { "text": "Synchronized retry waves overwhelm recovery", "correct": true },
+        { "text": "The queue deadlocks", "correct": false },
+        { "text": "Jobs expire after one retry", "correct": false }
+      ]
     }},
     { "t": 40000, "type": "tick", "tool": "Edit",  "label": "Edited src/webhooks.js — dedupe" },
     { "t": 41500, "type": "tick", "tool": "Write", "label": "Wrote test/dedupe.test.js" },
     { "t": 43000, "type": "card", "card": {
-      "seq": 4, "importance": 3, "domain": "databases", "headline": "Idempotency via unique event-ID constraint",
-      "what_happened": "The agent stores each Stripe event ID in a table with a UNIQUE constraint and skips processing on conflict — instead of checking 'have I seen this?' in application code.",
-      "why_it_matters": "A read-then-write check has a race: two concurrent deliveries both read 'not seen' and both process. Pushing uniqueness into the database makes the check atomic.",
-      "question": "Why is 'SELECT then INSERT' not enough to guarantee an event is processed once?",
-      "answer": "Two concurrent requests can both SELECT before either INSERTs — both see no row and both proceed. A UNIQUE constraint makes one of the INSERTs fail atomically."
+      "seq": 4, "importance": 3, "domain": "databases", "headline": "Dedupe in the database, not the code",
+      "what_happened": "Each event ID gets a UNIQUE constraint — duplicates simply fail to insert.",
+      "why_it_matters": "A 'have I seen this?' check in code has a race window. The constraint doesn't.",
+      "question": "Why isn't SELECT-then-INSERT enough?",
+      "answer": "Two concurrent requests can both read 'not seen' before either writes.",
+      "options": [
+        { "text": "SELECT is too slow for webhooks", "correct": false },
+        { "text": "Two requests can both read 'not seen' first", "correct": true },
+        { "text": "INSERTs can't fail on duplicates", "correct": false }
+      ]
     }},
     { "t": 52000, "type": "tick", "tool": "Bash",  "label": "npm test — all passing" },
     { "t": 53500, "type": "tick", "tool": "Write", "label": "Wrote README.md" },
     { "t": 56000, "type": "card", "card": {
-      "seq": 5, "importance": 3, "domain": "async-and-queues", "headline": "Poison messages go to a dead-letter queue",
-      "what_happened": "After max retries, failing jobs are moved to a dead-letter queue instead of being dropped or retried forever.",
-      "why_it_matters": "A permanently-failing job otherwise either blocks the queue (retry forever) or silently disappears (drop). The DLQ preserves the evidence and keeps the main queue flowing.",
-      "question": "What are the two failure modes a dead-letter queue is protecting you from?",
-      "answer": "Infinite retry loops that clog the queue, and silent data loss from dropping unprocessable jobs. The DLQ parks them for a human."
+      "seq": 5, "importance": 3, "domain": "async-and-queues", "headline": "Poison jobs get a dead-letter queue",
+      "what_happened": "After max retries, failing jobs park in a DLQ instead of vanishing.",
+      "why_it_matters": "The alternatives are an infinite retry loop or silent data loss.",
+      "question": "What two failures does a DLQ prevent?",
+      "answer": "Retry loops that clog the queue, and dropped jobs nobody ever sees."
     }},
     { "t": 62000, "type": "status", "text": "Agent finished — 47 actions taken, 5 surfaced to you. That's the product: the filter, not the feed." }
   ]
