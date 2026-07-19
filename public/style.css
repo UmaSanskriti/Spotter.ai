@@ -73,7 +73,7 @@ body {
 .logo span { color: var(--accent); }
 
 /* ---------- landing ---------- */
-.hero { text-align: center; padding: 36px 0 8px; }
+.hero { text-align: center; padding: 18px 0 8px; }
 .hero h1 {
   font-size: clamp(34px, 6vw, 52px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.08;
 }
@@ -82,11 +82,11 @@ body {
   background: linear-gradient(120deg, #6c63ff, #ff8e72);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.tagline { color: var(--muted); font-size: 18px; margin: 18px auto 0; max-width: 520px; line-height: 1.55; }
+.tagline { color: var(--muted); font-size: 18px; margin: 14px auto 0; max-width: 520px; line-height: 1.55; }
 
-.cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+.cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
 
-.float-strip { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 44px 0 8px; }
+.float-strip { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 32px 0 8px; }
 .float-chip {
   padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 600;
   animation: bob 3.2s ease-in-out infinite;
@@ -250,14 +250,177 @@ body {
   background: rgba(253, 247, 242, .82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   padding: 20px;
 }
-.intro-card { max-width: 460px; width: 100%; padding: 36px; text-align: center; animation: rise .4s ease; }
-.intro-card .emoji { font-size: 44px; }
-.intro-card h2 { font-size: 22px; margin: 14px 0 8px; letter-spacing: -.4px; }
-.intro-card p { color: var(--muted); font-size: 15px; line-height: 1.55; }
-.intro-dots { display: flex; gap: 8px; justify-content: center; margin-top: 22px; }
+.intro-card { max-width: 560px; width: 100%; padding: 38px 40px 30px; text-align: center; animation: rise .4s ease; }
+.intro-card h2 { font-size: 32px; margin: 18px 0 10px; letter-spacing: -.7px; }
+.intro-card p { color: var(--muted); font-size: 18px; line-height: 1.55; max-width: 440px; margin: 0 auto; }
+.intro-dots { display: flex; gap: 8px; justify-content: center; margin-top: 24px; }
 .intro-dots .dot.on { background: var(--accent); }
 .intro-skip { margin-top: 16px; }
 
+/* ---------- intro scenes ---------- */
+.scene { position: relative; height: 150px; }
+
+/* beat 1: resume flies up into the brain, bar fills, profile chips pop */
+.sc-upload .sc-doc {
+  position: absolute; left: 50%; bottom: 68px; transform: translateX(-50%);
+  font-size: 40px; animation: doc-fly 1.5s cubic-bezier(.4,.1,.4,1) forwards;
+}
+@keyframes doc-fly {
+  0%   { bottom: 34px; opacity: 0; transform: translateX(-50%) scale(.7); }
+  25%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  80%  { bottom: 96px; opacity: 1; transform: translateX(-50%) scale(.55); }
+  100% { bottom: 100px; opacity: 0; transform: translateX(-50%) scale(.3); }
+}
+.sc-upload .sc-brain {
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  font-size: 46px; animation: brain-pulse 1s ease 1.3s 2;
+}
+@keyframes brain-pulse { 50% { transform: translateX(-50%) scale(1.22); } }
+.sc-upload .sc-bar {
+  position: absolute; left: 50%; transform: translateX(-50%); top: 66px;
+  width: 180px; height: 8px; border-radius: 999px; background: rgba(120,110,200,.18); overflow: hidden;
+}
+.sc-upload .sc-bar i {
+  display: block; height: 100%; width: 0; border-radius: 999px;
+  background: linear-gradient(90deg, #6c63ff, #8f7bff);
+  animation: bar-fill 1.5s ease-out .2s forwards;
+}
+@keyframes bar-fill { to { width: 100%; } }
+.sc-upload .sc-chips {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; gap: 10px; justify-content: center;
+}
+.sc-chip {
+  padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 700;
+  background: var(--accent-soft); color: var(--accent);
+  opacity: 0; transform: translateY(12px) scale(.8);
+  animation: chip-pop .45s cubic-bezier(.2,.9,.3,1.4) forwards;
+}
+.sc-chip b { letter-spacing: 2px; }
+.sc-chip:nth-child(1) { animation-delay: 1.9s; }
+.sc-chip:nth-child(2) { animation-delay: 2.25s; }
+.sc-chip:nth-child(3) { animation-delay: 2.6s; }
+@keyframes chip-pop { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* beat 2: a real terminal runs the agent; Spotter hooks in and beams to the phone */
+.sc-work { display: flex; align-items: center; justify-content: center; gap: 0; }
+.sc-term {
+  width: 250px; text-align: left; border-radius: 12px; overflow: visible;
+  background: #1c2030; box-shadow: 0 14px 34px rgba(40, 35, 80, .35);
+  position: relative; flex-shrink: 0;
+  animation: rise .4s ease;
+}
+.sc-term-bar {
+  display: flex; align-items: center; gap: 5px; padding: 8px 10px;
+  background: #262b3d; border-radius: 12px 12px 0 0;
+}
+.sc-term-bar i { width: 9px; height: 9px; border-radius: 50%; }
+.sc-term-bar i:nth-child(1) { background: #ff8e72; }
+.sc-term-bar i:nth-child(2) { background: #ffd166; }
+.sc-term-bar i:nth-child(3) { background: #4fd39f; }
+.sc-term-bar span { color: #8b96ab; font-size: 10.5px; font-weight: 700; margin-left: 6px;
+  font-family: ui-monospace, Menlo, monospace; }
+.sc-term-body { padding: 9px 12px 12px; }
+.tl {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+  color: #cfe0ff; line-height: 1.75; white-space: nowrap; overflow: hidden;
+  opacity: 0; animation: line-in .3s ease forwards;
+}
+.tl b { color: #4fd39f; font-weight: 700; }
+.tl1 { color: #8f9dff; animation-delay: .2s; }
+.tl2 { animation-delay: .8s; }
+.tl3 { animation-delay: 1.4s; }
+.tl4 { animation-delay: 2.0s; }
+@keyframes line-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: .95; transform: none; } }
+.sc-spot-badge {
+  position: absolute; right: -10px; top: -12px;
+  padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 800;
+  background: linear-gradient(135deg, #6c63ff, #8f7bff); color: #fff;
+  box-shadow: 0 6px 18px rgba(108, 99, 255, .45);
+  opacity: 0; transform: scale(.6);
+  animation: chip-pop .45s cubic-bezier(.2,.9,.3,1.4) 1s forwards, badge-glow 1.6s ease 1.5s infinite;
+}
+@keyframes badge-glow {
+  50% { box-shadow: 0 6px 26px rgba(108, 99, 255, .8); }
+}
+.sc-work .sc-beam {
+  width: 120px; height: 4px; margin: 0 14px; border-radius: 999px;
+  background: repeating-linear-gradient(90deg, #6c63ff 0 14px, transparent 14px 26px);
+  background-size: 26px 100%;
+  opacity: 0;
+  animation: beam-flow 1s linear 1.5s infinite, fade-in .4s ease 1.5s forwards;
+}
+@keyframes beam-flow { to { background-position: 26px 0; } }
+@keyframes fade-in { to { opacity: 1; } }
+.sc-work .sc-phone {
+  font-size: 54px; position: relative;
+  opacity: 0; transform: scale(.6);
+  animation: chip-pop .5s cubic-bezier(.2,.9,.3,1.4) 2s forwards;
+}
+.sc-ping {
+  position: absolute; top: 2px; right: -4px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--coral);
+  animation: ping 1.2s ease-out 2.5s infinite;
+}
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 rgba(255,142,114,.55); }
+  100% { box-shadow: 0 0 0 16px rgba(255,142,114,0); }
+}
+
+/* beat 3: a stream of grey moves hits the funnel; one survives as a card */
+.sc-filter .sc-stream {
+  position: absolute; left: 0; right: 0; top: 26px;
+  display: flex; gap: 14px; justify-content: center;
+}
+.sc-filter .sc-stream i {
+  width: 14px; height: 14px; border-radius: 50%; background: rgba(120,110,200,.3);
+  animation: drop-die 1.6s ease forwards;
+}
+.sc-filter .sc-stream i:nth-child(1) { animation-delay: .15s; }
+.sc-filter .sc-stream i:nth-child(2) { animation-delay: .35s; }
+.sc-filter .sc-stream i:nth-child(3) { animation-delay: .55s; }
+.sc-filter .sc-stream i:nth-child(4) { animation-delay: .75s; }
+.sc-filter .sc-stream i:nth-child(5) { animation-delay: .95s; }
+.sc-filter .sc-stream i:nth-child(6) { animation-delay: 1.15s; }
+@keyframes drop-die { 60% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(26px) scale(.4); } }
+.sc-filter .sc-stream i.keep {
+  background: var(--accent);
+  animation-name: drop-keep;
+}
+@keyframes drop-keep { 60% { transform: translateY(0); } 100% { opacity: 0; transform: translateY(30px) scale(1.4); } }
+.sc-filter .sc-funnel {
+  position: absolute; left: 50%; transform: translateX(-50%); top: 52px; font-size: 40px;
+}
+.sc-filter .sc-minicard {
+  position: absolute; left: 50%; transform: translateX(-50%) translateY(14px); bottom: 6px;
+  padding: 12px 20px; border-radius: 14px; font-size: 15px; font-weight: 700;
+  background: #fff; box-shadow: var(--shadow); border: 1px solid var(--glass-border);
+  color: var(--ink); opacity: 0;
+  animation: card-land .5s cubic-bezier(.2,.9,.3,1.3) 2.2s forwards;
+}
+@keyframes card-land { to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
 @media (min-width: 900px) {
   .wrap.session-wrap { max-width: 640px; }
+}
+
+/* ---------- desktop landing: one viewport, zero scroll ---------- */
+@media (min-width: 980px) {
+  .wrap { max-width: 1060px; padding-bottom: 24px; }
+  .nav { margin-bottom: 18px; }
+
+  .hero { padding: 10px 0 0; text-align: left; }
+  .hero-row { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+  .hero-copy { flex: 1; }
+  .hero h1 { font-size: 46px; }
+  .tagline { margin: 12px 0 0; max-width: 480px; }
+  .cta-row { justify-content: flex-start; margin-top: 20px; }
+  .btn-primary { font-size: 16px; padding: 15px 26px; }
+
+  .float-strip { flex-direction: column; align-items: flex-end; gap: 12px; margin: 0; flex-shrink: 0; }
+
+  .how { margin-top: 26px; }
+  .how-card { padding: 18px; }
+  .statline { margin-top: 18px; padding: 14px 20px; }
+  .foot { margin-top: 18px; }
 }
