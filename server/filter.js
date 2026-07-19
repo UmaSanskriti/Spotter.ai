@@ -5,6 +5,7 @@
 // Model candidates tried in order; first one that answers gets pinned for the process lifetime.
 const MODEL_CANDIDATES = [
   process.env.SPOTTER_MODEL,
+  process.env.GEMINI_MODEL,
   'gemini-3.1-pro',
   'gemini-flash-latest',
   'gemini-2.5-flash',
