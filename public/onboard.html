@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Spotter — set up your charter</title>
+<title>Spotter - set up your charter</title>
 <style>
 /* ───────────────────────────────────────────────────────────────
-   Spotter onboarding — same committed dark instrument as the daily
+   Spotter onboarding - same committed dark instrument as the daily
    driver. Warm accent = the forward action. Cool accent = the moment
    your charter is confirmed. Serif italic headlines, mono for labels
    and levels, grotesk for body. One entrance per step; nothing else moves.
@@ -51,7 +51,7 @@ a{color:inherit;text-decoration:none}
 .btn-sm{font-size:12.5px;color:var(--ink-2);padding:7px 13px;border:1px solid var(--line-2);border-radius:999px;transition:color .15s,border-color .15s}
 .btn-sm:hover{color:var(--ink);border-color:var(--ink-3)}
 
-/* progress rail — encodes the real 3-phase sequence */
+/* progress rail - encodes the real 3-phase sequence */
 .rail{display:flex;gap:8px;padding:6px 2px 22px}
 .rail .seg{flex:1;height:3px;border-radius:2px;background:var(--sunk);overflow:hidden}
 .rail .seg>span{display:block;height:100%;width:0;background:var(--warm);border-radius:2px;transition:width .4s ease}
@@ -162,7 +162,7 @@ textarea{resize:vertical;line-height:1.5}
           resume once, learns what you already know, and from then on only surfaces the decisions
           <b>above your level</b>. Everything else stays quiet.</p>
         <div class="step-actions">
-          <button class="linkish" id="skip-onboard">Skip — just start a session</button>
+          <button class="linkish" id="skip-onboard">Skip - just start a session</button>
           <button class="btn btn-primary" id="to-signup">Begin</button>
         </div>
       </div>
@@ -170,7 +170,7 @@ textarea{resize:vertical;line-height:1.5}
       <!-- Step 2: sign up -->
       <div class="step-card" id="step-signup" style="display:none">
         <h2>First, who are you?</h2>
-        <p class="sub">No password — this just keeps your charter yours.</p>
+        <p class="sub">No password - this just keeps your charter yours.</p>
         <div class="field">
           <label for="name">Name</label>
           <input type="text" id="name" placeholder="Sam Rivera" autocomplete="name">
@@ -188,7 +188,7 @@ textarea{resize:vertical;line-height:1.5}
       <!-- Step 3: resume -->
       <div class="step-card" id="step-resume" style="display:none">
         <h2>Now, your resume.</h2>
-        <p class="sub">Gemini reads it and drafts your skill profile — what you're strong in, what
+        <p class="sub">Gemini reads it and drafts your skill profile - what you're strong in, what
           you're still building. You correct it before anything starts.</p>
         <div class="drop" id="drop">
           <div class="big">RESUME</div>
@@ -219,7 +219,7 @@ textarea{resize:vertical;line-height:1.5}
         <div class="role-pill" id="role"></div>
         <p class="sub" id="summary"></p>
         <div id="domains"></div>
-        <p class="dots-hint">Tap the dots to set a level — your word is final.</p>
+        <p class="dots-hint">Tap the dots to set a level - your word is final.</p>
         <div class="step-actions">
           <span></span>
           <button class="btn btn-green" id="start-session">Start my first session →</button>

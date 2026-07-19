@@ -22,7 +22,7 @@ const CARD_SCHEMA = {
              'what_happened', 'why_it_matters', 'question', 'answer'],
 };
 
-// Diagnostics surfaced at /healthz — so a broken deploy tells you *why* from the outside.
+// Diagnostics surfaced at /healthz - so a broken deploy tells you *why* from the outside.
 const diag = {
   get geminiKeySet() { return gemini.keySet; },
   get model() { return gemini.model; },
@@ -42,12 +42,12 @@ function buildPrompt(session, event) {
 
   return `You are Spotter, an observer riding along on an AI coding agent's session.
 The human delegated this work and is watching from a second screen. Your job is to decide
-whether THIS event contains a decision worth teaching them — and to stay silent otherwise.
+whether THIS event contains a decision worth teaching them - and to stay silent otherwise.
 Silence is a feature. Only material decisions with a real "why" behind them deserve a card:
 architectural choices, tradeoffs, error-recovery strategy, security-relevant moves.
 Routine edits, boilerplate, and mechanical steps do not.
 
-USER PROFILE (domain: level, 1=beginner 3=strong — surface only what is ABOVE their level):
+USER PROFILE (domain: level, 1=beginner 3=strong - surface only what is ABOVE their level):
 ${profileLines}
 
 RECENT SESSION CONTEXT:
@@ -59,7 +59,8 @@ detail: ${summarizeEvent(event)}
 
 Decide. If you surface, write for a smart person who didn't watch the work happen:
 headline names the decision, why_it_matters gives the underlying principle, and the
-question is answerable from the card alone after a beat of thought.`;
+question is answerable from the card alone after a beat of thought.
+Style: short plain sentences. Never use em dashes in any field; use commas or periods.`;
 }
 
 function summarizeEvent(event) {

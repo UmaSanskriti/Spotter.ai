@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spotter — demo</title>
+  <title>Spotter - demo</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/demo.css">
 </head>
@@ -144,9 +144,9 @@
               const fb = document.createElement('div');
               fb.className = 'mcq-fb ' + (opt.correct ? 'good' : 'bad');
               fb.textContent = body.dataset.auto
-                ? '✓ Auto-answered to keep things moving — next one’s yours.'
+                ? '✓ Auto-answered to keep things moving - next one’s yours.'
                 : opt.correct
-                  ? '✓ Called it — added to your profile.'
+                  ? '✓ Called it - added to your profile.'
                   : '✗ Not quite. The attempt still counts as a rep.';
               body.appendChild(fb);
             };
@@ -195,7 +195,7 @@
       const demo = await (await fetch('/demo')).json();
 
       typeUserLine('build a webhook ingestion service for Stripe payments', () => {
-        termLine('gl-spot', '◉ spotter connected — session 8f3a, streaming to your second screen');
+        termLine('gl-spot', '◉ spotter connected - session 8f3a, streaming to your second screen');
         schedule(() => termLine('gl-think', '✦ Planning: ack fast, verify signatures, process async…'), 900);
 
         let extra = 0; // every card adds reading time to everything after it
@@ -212,11 +212,11 @@
             extra += CARD_PAUSE;
           } else if (item.type === 'status' && item.t > 0) {
             schedule(() => {
-              termLine('gl-done', '✦ Done — webhook service ready. 47 actions taken.');
+              termLine('gl-done', '✦ Done - webhook service ready. 47 actions taken.');
               for (const feedId of ['pc-feed', 'ph-feed']) {
                 const el = document.createElement('div');
                 el.className = 'sp-hint';
-                el.textContent = '47 actions. 5 surfaced. That’s the product — the filter, not the feed.';
+                el.textContent = '47 actions. 5 surfaced. That’s the product - the filter, not the feed.';
                 $(feedId).prepend(el);
               }
             }, t);
@@ -235,10 +235,10 @@
       end.innerHTML = `
         <div class="demo-end-card glass">
           <h2>That’s Spotter.</h2>
-          <p>The agent shipped the feature. You walked away knowing five things you didn’t —
+          <p>The agent shipped the feature. You walked away knowing five things you didn’t -
              without losing a minute of work.</p>
           <div class="demo-end-ctas">
-            <a class="btn btn-primary" href="/onboard.html">Get started — it’s free</a>
+            <a class="btn btn-primary" href="/onboard.html">Get started - it’s free</a>
             <button class="btn btn-ghost" id="rewatch">↺ Re-watch demo</button>
             <a class="btn btn-ghost" href="/onboard.html">Sign in</a>
           </div>

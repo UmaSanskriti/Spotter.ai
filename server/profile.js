@@ -1,4 +1,4 @@
-// Resume → profile. The PDF goes straight to Gemini (it reads PDFs natively) —
+// Resume → profile. The PDF goes straight to Gemini (it reads PDFs natively) -
 // no parsing dependency, and the profile is derived bottom-up from the user's own history.
 
 const { generateJSON } = require('./gemini');
@@ -31,12 +31,13 @@ const PROFILE_SCHEMA = {
 
 const PROMPT = `You are Spotter's onboarding analyst. Read this person's resume/CV and build their
 skill profile. Derive 6-8 PRACTICE-ABLE technical/professional domains from what they have actually
-done — specific enough that a coding-agent session could touch them (e.g. "sql-and-data-modeling",
+done - specific enough that a coding-agent session could touch them (e.g. "sql-and-data-modeling",
 "api-design", "concurrency", "testing-strategy", "systems-design", "security-basics", "devops-and-deploy",
 "frontend-architecture"). Rate each 1-3 from seniority signals in the resume: 1 = little/no evidence
 (they'd learn a lot here), 2 = working knowledge, 3 = strong (rarely worth interrupting them about).
-Prefer including 1-2 domains they clearly HAVEN'T mastered but their trajectory needs — those are
-where Spotter helps most. Be generous and encouraging in tone, precise in judgment.`;
+Prefer including 1-2 domains they clearly HAVEN'T mastered but their trajectory needs - those are
+where Spotter helps most. Be generous and encouraging in tone, precise in judgment.
+Style: short plain sentences. Never use em dashes in any field; use commas or periods.`;
 
 async function buildProfile({ text, fileB64, mime }) {
   const parts = [];

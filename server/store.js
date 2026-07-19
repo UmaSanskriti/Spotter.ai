@@ -47,7 +47,7 @@ function createSession(opts = {}) {
     eventsKept: 0,        // survived the pre-filter
     keptEvents: [],       // ring buffer of recent kept events (context for the filter)
     cards: [],            // surfaced cards, seq-numbered
-    // A user's own profile replaces the default wholesale — their domains, not ours.
+    // A user's own profile replaces the default wholesale - their domains, not ours.
     profile: opts.profile ? { ...opts.profile } : { ...DEFAULT_PROFILE },
     lastCardAt: 0,        // budget: max ~1 card / 90s
     listeners: new Set(), // SSE responses

@@ -31,7 +31,7 @@ app.post('/user/:id/resume', async (req, res) => {
   if (!text && !fileB64) return res.status(400).json({ error: 'text or fileB64 required' });
   try {
     const profile = await buildProfile({ text, fileB64, mime });
-    if (!profile) return res.status(502).json({ error: 'profile generation failed — check /healthz' });
+    if (!profile) return res.status(502).json({ error: 'profile generation failed - check /healthz' });
     Object.assign(user, profile);
     res.json({ role: user.role, summary: user.summary, domains: user.domains });
   } catch (err) {
@@ -40,7 +40,7 @@ app.post('/user/:id/resume', async (req, res) => {
   }
 });
 
-// Level overrides from the review screen — the user's word is absolute.
+// Level overrides from the review screen - the user's word is absolute.
 app.post('/user/:id/profile', (req, res) => {
   const user = store.getUser(req.params.id);
   if (!user) return res.status(404).json({ error: 'no such user' });
@@ -99,7 +99,7 @@ app.post('/event', async (req, res) => {
 
   store.recordEvent(s, event);
   store.broadcast(s, { type: 'tick', tool: event.tool || event.hook, state: store.publicState(s) });
-  res.json({ ok: true, seen: s.eventsSeen }); // ack fast — never block the agent's hook
+  res.json({ ok: true, seen: s.eventsSeen }); // ack fast - never block the agent's hook
 
   if (!preFilter(event)) return;
   store.keepEvent(s, event);

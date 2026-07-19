@@ -1,6 +1,6 @@
 // Stage 1 of the Spotter Filter: cheap, deterministic, no model.
 // Kills ~80% of events before they ever cost a Gemini call.
-// Silence is a feature — a firehose of teaching moments is the same failure as a firehose of logs.
+// Silence is a feature - a firehose of teaching moments is the same failure as a firehose of logs.
 
 const DROP_TOOLS = new Set([
   'Read', 'Grep', 'Glob', 'LS', 'TodoWrite', 'TodoRead', 'TaskList', 'TaskGet',
@@ -15,7 +15,7 @@ const TRIVIAL_BASH = /^\s*(ls|cat|head|tail|pwd|echo|which|env|git\s+(status|log
 function preFilter(event) {
   const { hook, tool, input } = event;
 
-  // Session end is always interesting — it carries the agent's own summary.
+  // Session end is always interesting - it carries the agent's own summary.
   if (hook === 'Stop' || hook === 'SubagentStop') return true;
 
   if (hook === 'PostToolUse') {

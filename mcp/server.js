@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Spotter MCP shim — the agent-agnostic surface.
+// Spotter MCP shim - the agent-agnostic surface.
 // Hooks are the primary observer for Claude Code (deterministic, no model goodwill);
 // this stdio MCP server is how any other MCP-speaking agent reports into the same session.
 // Deliberately dependency-free: raw JSON-RPC over stdio, ~100 lines.
@@ -22,7 +22,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         decision: { type: 'string', description: 'What you decided, one sentence' },
-        reasoning: { type: 'string', description: 'Why — the tradeoff or principle behind it' },
+        reasoning: { type: 'string', description: 'Why - the tradeoff or principle behind it' },
       },
       required: ['decision', 'reasoning'],
     },

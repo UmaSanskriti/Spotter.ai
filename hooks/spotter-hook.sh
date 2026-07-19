@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Spotter observer hook for Claude Code.
 # Claude Code pipes the hook payload as JSON on stdin; we forward it to the relay and
-# always exit 0 fast — the observer must never slow down or block the agent.
+# always exit 0 fast - the observer must never slow down or block the agent.
 #
 # Requires: SPOTTER_URL and SPOTTER_SESSION in the environment (see hooks/install.sh).
 
@@ -13,7 +13,7 @@ fi
 
 # Read the hook payload from stdin *before* backgrounding. If we background curl with
 # `--data-binary @-` directly, the script exits and closes the stdin pipe before curl
-# reads it — curl then posts an empty body, tool_name is lost, and every event is dropped.
+# reads it - curl then posts an empty body, tool_name is lost, and every event is dropped.
 PAYLOAD="$(cat)"
 
 curl -s -m 3 -X POST \

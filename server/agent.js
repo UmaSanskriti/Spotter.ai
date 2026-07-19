@@ -11,7 +11,7 @@
 //   • no key              -> a scripted offline agent, so the demo never depends on the network.
 
 const MODEL = process.env.SPOTTER_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-// Same broad key detection as server/gemini.js — AI Studio injects API_KEY, the SDK uses
+// Same broad key detection as server/gemini.js - AI Studio injects API_KEY, the SDK uses
 // GOOGLE_API_KEY, our docs say GEMINI_API_KEY. First one wins so a fresh deploy just works.
 const API_KEY =
   process.env.GEMINI_API_KEY ||
@@ -62,18 +62,19 @@ function systemPrompt(session) {
   return `You are a senior AI coding agent pair-programming with a developer who is delegating the work to you.
 Do the task well: write real, idiomatic, working code with a short explanation. This is the LEFT half of the screen.
 
-You are also wired into Spotter, which teaches the developer while you work — the RIGHT half of the screen.
+You are also wired into Spotter, which teaches the developer while you work - the RIGHT half of the screen.
 So alongside your code, surface the DECISIONS worth understanding: architecture choices, tradeoffs,
 error-recovery strategy, security-relevant moves, concurrency/async subtleties. NOT routine edits or boilerplate.
-Silence is a feature — most turns should surface 0 or 1 card, never more than 2. Only surface a decision that
+Silence is a feature - most turns should surface 0 or 1 card, never more than 2. Only surface a decision that
 is genuinely ABOVE this developer's current level in that domain; set above_user_level honestly.
 
-USER PROFILE (domain: level, 1=beginner 3=strong — only teach ABOVE their level):
+USER PROFILE (domain: level, 1=beginner 3=strong - only teach ABOVE their level):
 ${profileLines}
 
 For each surfaced card: headline names the decision, why_it_matters gives the underlying principle,
 and question is answerable from the card alone after a beat of thought. Write for a smart person who
-delegated the work and did not watch it happen.`;
+delegated the work and did not watch it happen.
+Style: short plain sentences. Never use em dashes anywhere; use commas or periods.`;
 }
 
 async function runAgentLive(session, userMessage, history) {
@@ -136,7 +137,7 @@ async function runAgent(session, userMessage, history) {
 }
 
 // ----------------------------------------------------------------------------
-// Scripted offline agent — keyword-matched. Keeps the side-by-side demo working
+// Scripted offline agent - keyword-matched. Keeps the side-by-side demo working
 // with zero network/key. Each scenario is a real decision worth a card.
 // ----------------------------------------------------------------------------
 
@@ -163,7 +164,7 @@ async function withRetry(fn, { max = 5 } = {}) {
       domain: 'async-and-queues', importance: 4, above_user_level: true,
       headline: 'Retries use exponential backoff with jitter',
       what_happened: 'Failed jobs retry at 1s, 2s, 4s, 8s with a random jitter added to each delay.',
-      why_it_matters: 'Fixed-interval retries from many failed jobs all land at the same instant and re-overwhelm the recovering service — a thundering herd. Jitter desynchronises them; backoff gives the failure time to clear.',
+      why_it_matters: 'Fixed-interval retries from many failed jobs all land at the same instant and re-overwhelm the recovering service - a thundering herd. Jitter desynchronises them; backoff gives the failure time to clear.',
       question: 'If 500 jobs fail at once, what goes wrong with a plain "retry every 5 seconds" rule?',
       answer: 'All 500 retry in synchronised waves every 5s, hammering the recovering service. Jitter spreads them out so it can actually recover.',
     }],
@@ -190,9 +191,9 @@ function requireAuth(req, res, next) {
       domain: 'security', importance: 4, above_user_level: true,
       headline: 'Verify the JWT signature on every request',
       what_happened: 'Auth is enforced in middleware that runs jwt.verify() before any protected handler, rejecting tampered or expired tokens.',
-      why_it_matters: 'A JWT is only trustworthy because its signature is checked against your secret — decoding the payload without verifying lets anyone forge an admin token. Centralising it in middleware means no route can forget the check.',
+      why_it_matters: 'A JWT is only trustworthy because its signature is checked against your secret - decoding the payload without verifying lets anyone forge an admin token. Centralising it in middleware means no route can forget the check.',
       question: 'Why is base64-decoding a JWT to read its "role" claim not enough to trust it?',
-      answer: 'The payload is just base64 — anyone can edit "role":"admin" and re-encode it. Only verifying the signature against your secret proves it was issued by you and unaltered.',
+      answer: 'The payload is just base64 - anyone can edit "role":"admin" and re-encode it. Only verifying the signature against your secret proves it was issued by you and unaltered.',
     }],
   },
   {
@@ -212,7 +213,7 @@ const users = await User.findAll({ include: [{ model: Post }] });
       domain: 'databases', importance: 4, above_user_level: true,
       headline: 'Eliminated an N+1 query with eager loading',
       what_happened: 'Replaced a loop that ran one query per user with a single query that joins in the related posts.',
-      why_it_matters: 'The N+1 pattern turns a page that should be one round-trip into hundreds — latency scales with row count and the DB does redundant work. Eager loading (a JOIN or IN-list) collapses it back to one round-trip.',
+      why_it_matters: 'The N+1 pattern turns a page that should be one round-trip into hundreds - latency scales with row count and the DB does redundant work. Eager loading (a JOIN or IN-list) collapses it back to one round-trip.',
       question: 'Why does rendering 200 users with a per-user query get slower as the table grows?',
       answer: 'Each new user adds another network round-trip to the database, so total time grows linearly with rows. One joined query stays roughly constant.',
     }],
@@ -236,7 +237,7 @@ const onSearch = debounce(q => fetchResults(q), 300);
       domain: 'frontend', importance: 3, above_user_level: true,
       headline: 'Debounced the search input',
       what_happened: 'The search now waits 300ms after the last keystroke before calling the API, instead of firing on every character.',
-      why_it_matters: 'Firing a request per keystroke means "react" sends r, re, rea, reac, react — five requests, and responses can arrive out of order. Debouncing collapses a burst of events into the one that matters: the last.',
+      why_it_matters: 'Firing a request per keystroke means "react" sends r, re, rea, reac, react - five requests, and responses can arrive out of order. Debouncing collapses a burst of events into the one that matters: the last.',
       question: 'Besides load, what correctness bug can per-keystroke search cause?',
       answer: 'Out-of-order responses: an earlier request can resolve after a later one and overwrite fresh results with stale ones. Debouncing (or cancellation) avoids the race.',
     }],
@@ -245,7 +246,7 @@ const onSearch = debounce(q => fetchResults(q), 300);
 
 const GENERIC = {
   reply:
-`Done — here's a clean implementation.
+`Done - here's a clean implementation.
 
 \`\`\`js
 // (offline demo agent) set GEMINI_API_KEY to get a live agent that writes

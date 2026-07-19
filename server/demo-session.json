@@ -2,7 +2,7 @@
   "task": "Build a webhook ingestion service for Stripe payment events",
   "note": "Recorded Spotter session. Timings are offsets in ms from replay start; the client paces playback. eventsSeen ticks show everything the agent did; cards are the few Spotter chose to surface.",
   "timeline": [
-    { "t": 0,     "type": "status", "text": "Agent session started — task: build a webhook ingestion service" },
+    { "t": 0,     "type": "status", "text": "Agent session started - task: build a webhook ingestion service" },
     { "t": 1200,  "type": "tick", "tool": "Read",  "label": "Read package.json" },
     { "t": 2200,  "type": "tick", "tool": "Read",  "label": "Read src/app.js" },
     { "t": 3100,  "type": "tick", "tool": "Grep",  "label": "Searched for existing route handlers" },
@@ -11,7 +11,7 @@
     { "t": 7500,  "type": "card", "card": {
       "seq": 1, "importance": 5, "domain": "systems-design", "headline": "Chose a queue over inline processing",
       "what_happened": "The webhook now replies instantly and queues the real work for later.",
-      "why_it_matters": "Slow replies make Stripe retry — and retries mean the same payment gets processed twice.",
+      "why_it_matters": "Slow replies make Stripe retry - and retries mean the same payment gets processed twice.",
       "question": "Why does slow inline processing cause double payments?",
       "answer": "Stripe times out, assumes failure, and resends the event.",
       "options": [
@@ -21,34 +21,34 @@
       ]
     }},
     { "t": 16000, "type": "tick", "tool": "Read",  "label": "Read Stripe docs snippet" },
-    { "t": 17500, "type": "tick", "tool": "Edit",  "label": "Edited src/webhooks.js — signature check" },
+    { "t": 17500, "type": "tick", "tool": "Edit",  "label": "Edited src/webhooks.js - signature check" },
     { "t": 19000, "type": "card", "card": {
       "seq": 2, "importance": 4, "domain": "security", "headline": "Verify the signature before parsing",
       "what_happened": "Every webhook is HMAC-checked against the raw bytes before anything reads it.",
       "why_it_matters": "Without this, anyone who finds your URL can fake a 'payment succeeded'.",
       "question": "Why check the raw body instead of the parsed JSON?",
-      "answer": "HMAC is computed over exact bytes — re-serialized JSON gives different bytes and a false mismatch."
+      "answer": "HMAC is computed over exact bytes - re-serialized JSON gives different bytes and a false mismatch."
     }},
-    { "t": 27000, "type": "tick", "tool": "Bash",  "label": "npm test — 2 failing" },
-    { "t": 28500, "type": "tick", "tool": "Edit",  "label": "Edited src/queue.js — retry logic" },
-    { "t": 30000, "type": "tick", "tool": "Bash",  "label": "npm test — all passing" },
+    { "t": 27000, "type": "tick", "tool": "Bash",  "label": "npm test - 2 failing" },
+    { "t": 28500, "type": "tick", "tool": "Edit",  "label": "Edited src/queue.js - retry logic" },
+    { "t": 30000, "type": "tick", "tool": "Bash",  "label": "npm test - all passing" },
     { "t": 31500, "type": "card", "card": {
-      "seq": 3, "importance": 4, "domain": "async-and-queues", "headline": "Retries back off — with jitter",
+      "seq": 3, "importance": 4, "domain": "async-and-queues", "headline": "Retries back off - with jitter",
       "what_happened": "Failed jobs retry at 1s, 2s, 4s, 8s, each nudged by a random delay.",
       "why_it_matters": "500 jobs retrying in sync would hammer the service that's trying to recover.",
       "question": "What breaks with a plain 'retry every 5s' rule?",
-      "answer": "Everything retries at the same instant, in waves — jitter spreads them out.",
+      "answer": "Everything retries at the same instant, in waves - jitter spreads them out.",
       "options": [
         { "text": "Synchronized retry waves overwhelm recovery", "correct": true },
         { "text": "The queue deadlocks", "correct": false },
         { "text": "Jobs expire after one retry", "correct": false }
       ]
     }},
-    { "t": 40000, "type": "tick", "tool": "Edit",  "label": "Edited src/webhooks.js — dedupe" },
+    { "t": 40000, "type": "tick", "tool": "Edit",  "label": "Edited src/webhooks.js - dedupe" },
     { "t": 41500, "type": "tick", "tool": "Write", "label": "Wrote test/dedupe.test.js" },
     { "t": 43000, "type": "card", "card": {
       "seq": 4, "importance": 3, "domain": "databases", "headline": "Dedupe in the database, not the code",
-      "what_happened": "Each event ID gets a UNIQUE constraint — duplicates simply fail to insert.",
+      "what_happened": "Each event ID gets a UNIQUE constraint - duplicates simply fail to insert.",
       "why_it_matters": "A 'have I seen this?' check in code has a race window. The constraint doesn't.",
       "question": "Why isn't SELECT-then-INSERT enough?",
       "answer": "Two concurrent requests can both read 'not seen' before either writes.",
@@ -58,7 +58,7 @@
         { "text": "INSERTs can't fail on duplicates", "correct": false }
       ]
     }},
-    { "t": 52000, "type": "tick", "tool": "Bash",  "label": "npm test — all passing" },
+    { "t": 52000, "type": "tick", "tool": "Bash",  "label": "npm test - all passing" },
     { "t": 53500, "type": "tick", "tool": "Write", "label": "Wrote README.md" },
     { "t": 56000, "type": "card", "card": {
       "seq": 5, "importance": 3, "domain": "async-and-queues", "headline": "Poison jobs get a dead-letter queue",
@@ -67,6 +67,6 @@
       "question": "What two failures does a DLQ prevent?",
       "answer": "Retry loops that clog the queue, and dropped jobs nobody ever sees."
     }},
-    { "t": 62000, "type": "status", "text": "Agent finished — 47 actions taken, 5 surfaced to you. That's the product: the filter, not the feed." }
+    { "t": 62000, "type": "status", "text": "Agent finished - 47 actions taken, 5 surfaced to you. That's the product: the filter, not the feed." }
   ]
 }

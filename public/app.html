@@ -6,7 +6,7 @@
 <title>Spotter</title>
 <style>
 /* ───────────────────────────────────────────────────────────────
-   Spotter — daily-driver instrument. Single committed dark theme
+   Spotter - daily-driver instrument. Single committed dark theme
    (cockpit "stick time" heritage): deep base, one WARM accent for
    live agent activity, one COOL accent used only for positive
    resolution. Serif italic = wordmark + card headlines. Mono =
@@ -25,7 +25,7 @@
   --ink-2:#7a8095;
   --ink-3:#9aa0b2;
   --ink-4:#c9cdd9;
-  --warm:#6c63ff;          /* LIVE agent activity — the brand accent */
+  --warm:#6c63ff;          /* LIVE agent activity - the brand accent */
   --warm-2:#8f7bff;
   --warm-soft:rgba(108,99,255,.12);
   --cool:#2eb886;          /* positive resolution ONLY */
@@ -295,8 +295,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
     <div class="dots" id="dots" title="connected agents"></div>
     <span class="spacer"></span>
     <div class="pips" id="pips" title="reps left today"></div>
-    <button class="ctl" data-action="pause" id="pauseBtn" title="crunch mode — silence everything">Pause</button>
-    <button class="ctl" data-action="minimize" title="collapse to one line">—</button>
+    <button class="ctl" data-action="pause" id="pauseBtn" title="crunch mode - silence everything">Pause</button>
+    <button class="ctl" data-action="minimize" title="collapse to one line">-</button>
   </header>
 
   <main class="stage" id="stage">
@@ -324,7 +324,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
 <script>
 "use strict";
 /* ═══════════════════════════════════════════════════════════════
-   Spotter daily-driver — one instrument, three states.
+   Spotter daily-driver - one instrument, three states.
    The agent event stream enters through a SINGLE boundary: dispatch(evt).
    Today that boundary is fed by a scripted timeline (ENGINE); swapping in
    a WebSocket to localhost later means only replacing the ENGINE.
@@ -411,7 +411,7 @@ function onTaskStarted(t){
   if(blocked){
     // Interruptions fire only when we can afford them. Otherwise: wire only, decay silently.
     S.silent = t;
-    return; // stay IDLE — nothing rises
+    return; // stay IDLE - nothing rises
   }
   S.budgetUsed++;
   S.task = t; S.bet=null; S.locked=false; S.skipped=false; S.userTouched=false;
@@ -534,7 +534,7 @@ function sparkline(id, retention, half){
 
 function renderCharter(){
   const {slip,strong}=computeWeek();
-  const week = `<div class="weekline">This week — <strong class="down">${slip.name}</strong> slipping fastest · <strong class="strong">${strong.name}</strong> holding strong.</div>`;
+  const week = `<div class="weekline">This week - <strong class="down">${slip.name}</strong> slipping fastest · <strong class="strong">${strong.name}</strong> holding strong.</div>`;
   const rows = skills.map(s=>{
     const open = S.expanded===s.id;
     const flashCls = S.flash===s.id ? (S.flashKind==="dim"?" flash-dim":" flash") : "";
@@ -556,7 +556,7 @@ function renderCharter(){
           <div><div class="k">Calibration</div><div class="v">${Math.round(s.cal*100)}%</div></div>
           <div><div class="k">Blind spot</div><div class="v" style="font-size:12px">${s.blind}</div></div>
         </div>
-        <div class="why">Why we keep this — ${s.reason}</div>
+        <div class="why">Why we keep this - ${s.reason}</div>
         <div class="seg" role="group" aria-label="protection for ${s.name}">
           <button data-action="status" data-id="${s.id}" data-status="protect" data-sel="${s.status==='protect'}">🔒 Protect</button>
           <button data-action="status" data-id="${s.id}" data-status="watch"   data-sel="${s.status==='watch'}">👁 Watch</button>
@@ -590,7 +590,7 @@ function renderCard(){
         </div>
         <div class="card-actions">
           <button class="primary" data-action="lockin" id="lockin" disabled>Lock it in</button>
-          <button class="skip" data-action="skip">Skip — costs nothing</button>
+          <button class="skip" data-action="skip">Skip - costs nothing</button>
         </div>
       </div>`;
   } else {
@@ -608,7 +608,7 @@ function renderCard(){
         </div>
         <div class="card-actions">
           <button class="shownow" data-action="shownow">Show now</button>
-          <button class="skip" data-action="skip" style="margin-left:auto">Skip — costs nothing</button>
+          <button class="skip" data-action="skip" style="margin-left:auto">Skip - costs nothing</button>
         </div>
       </div>`;
   }
@@ -663,7 +663,7 @@ function renderWire(){
 function renderMinMsg(){
   const {slip}=computeWeek();
   el.minmsg.textContent = S.paused ? "paused · tasks still logged"
-    : S.view==="live" ? "agent working — a rep is up"
+    : S.view==="live" ? "agent working - a rep is up"
     : S.wire.length ? S.wire[S.wire.length-1].agent+" · "+S.wire[S.wire.length-1].line
     : `${slip.name} slipping · all quiet`;
 }
@@ -689,7 +689,7 @@ function startCountdown(n){
   tick(); uiTimers.push(setInterval(tick,1000));
 }
 
-// ═══ USER INPUT (local — never the agent stream) ═══════════════
+// ═══ USER INPUT (local - never the agent stream) ═══════════════
 document.addEventListener("click", e=>{
   const btn=e.target.closest("[data-action]");
   if(!btn) return;
@@ -727,7 +727,7 @@ function doSkip(){
   S.skipped=true; S.bet=null;
   clearUI();
   setView("idle");             // return quietly; task keeps running in the wire
-  pushWire(agentLabel(S.task?.agent||"—"), "you skipped — no cost");
+  pushWire(agentLabel(S.task?.agent||"-"), "you skipped - no cost");
 }
 function togglePause(){
   S.paused=!S.paused;
@@ -745,17 +745,17 @@ function codeScenario(){
   const t={type:"task_started",kind:"code",agent:"claude",skillId:"debugging",
     title:"Fix the failing auth test suite",files,truth:"src/auth/token.ts"};
   const done={type:"task_completed",kind:"code",agent:"claude",skillId:"debugging",truth:"src/auth/token.ts",
-    explain:"Token TTL was compared in seconds against a millisecond timestamp — every session expired on issue."};
+    explain:"Token TTL was compared in seconds against a millisecond timestamp - every session expired on issue."};
   return {
     skillId:"debugging",
     steps:[
       [0,    t],
       [2600, {type:"telemetry",agent:"Claude Code",line:"read src/auth/session.ts"}],
-      [5200, {type:"telemetry",agent:"Claude Code",line:"ran pnpm test — 3 failing"}],
+      [5200, {type:"telemetry",agent:"Claude Code",line:"ran pnpm test - 3 failing"}],
       [8000, {type:"telemetry",agent:"Claude Code",line:"edited src/auth/token.ts"}],
-      [10800,{type:"telemetry",agent:"Claude Code",line:"ran pnpm test — 1 failing"}],
+      [10800,{type:"telemetry",agent:"Claude Code",line:"ran pnpm test - 1 failing"}],
       [13200,{type:"telemetry",agent:"Claude Code",line:"edited src/middleware/verify.ts"}],
-      [15400,{type:"telemetry",agent:"Claude Code",line:"ran pnpm test — all passing"}],
+      [15400,{type:"telemetry",agent:"Claude Code",line:"ran pnpm test - all passing"}],
       [16200, done],
     ],
     autoBet:[11500, ()=>{ // demo only: simulate a confident, correct call
@@ -771,9 +771,9 @@ function writingScenario(){
   const t={type:"task_started",kind:"writing",agent:"gemini",skillId:"investor",
     title:"Draft the seed investor update",prompt:"Which number leads?",
     chips:["ARR","Runway","MoM growth"],truth:"MoM growth",
-    draft:"Team — strong month. We crossed $1.2M ARR with 18 months of runway in the bank, and month over month we're compounding faster than last quarter. Here's what's driving it, what broke, and where we point the next dollar…"};
+    draft:"Team - strong month. We crossed $1.2M ARR with 18 months of runway in the bank, and month over month we're compounding faster than last quarter. Here's what's driving it, what broke, and where we point the next dollar…"};
   const done={type:"task_completed",kind:"writing",agent:"gemini",skillId:"investor",truth:"MoM growth",
-    explain:"For a seed update, lead with the rate of change — MoM growth signals momentum louder than an absolute ARR figure."};
+    explain:"For a seed update, lead with the rate of change - MoM growth signals momentum louder than an absolute ARR figure."};
   return {
     skillId:"investor",
     steps:[

@@ -24,7 +24,7 @@ SETTINGS="$SETTINGS_DIR/settings.json"
 mkdir -p "$SETTINGS_DIR"
 
 if [ -f "$SETTINGS" ]; then
-  echo "⚠ $SETTINGS already exists — merge this hooks block in manually:"
+  echo "⚠ $SETTINGS already exists - merge this hooks block in manually:"
 else
   cat > "$SETTINGS" <<'EOF'
 {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spotter — chat left, learn right</title>
+  <title>Spotter - chat left, learn right</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/live.css">
 </head>
@@ -22,14 +22,14 @@
       </div>
       <div class="chat" id="chat">
         <div class="msg agent">
-          <div class="bubble">Hey — I'm your coding agent. Tell me what to build and I'll ship it.
+          <div class="bubble">Hey - I'm your coding agent. Tell me what to build and I'll ship it.
             While I work, Spotter (right) will quietly teach you the decisions worth understanding.</div>
         </div>
       </div>
       <div class="suggests" id="suggests">
         <button data-p="Add retry with exponential backoff to my Stripe payment webhook">↻ retry + backoff</button>
         <button data-p="Add JWT auth middleware to protect my Express API routes">🔐 JWT auth</button>
-        <button data-p="My users list page is slow — fix the N+1 query">🐢 fix N+1 query</button>
+        <button data-p="My users list page is slow - fix the N+1 query">🐢 fix N+1 query</button>
         <button data-p="Add a debounce to my search input so it doesn't fire on every keystroke">⌨ debounce search</button>
       </div>
       <form class="composer" id="composer">
@@ -162,7 +162,7 @@
         history.push({ role: 'agent', text: data.reply });
         $('mode').textContent = data.live ? '· live · gemini' : '· offline demo · set GEMINI_API_KEY for live';
 
-        // Cards arrive a beat after the code — feels like Spotter noticing.
+        // Cards arrive a beat after the code - feels like Spotter noticing.
         (data.cards || []).forEach((card, i) => {
           setTimeout(() => {
             surfacedCount++; setState(seenCount, surfacedCount);
