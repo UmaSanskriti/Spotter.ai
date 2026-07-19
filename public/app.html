@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Spotter</title>
+<style>
+/* ───────────────────────────────────────────────────────────────
+   Spotter — daily-driver instrument. Single committed dark theme
+   (cockpit "stick time" heritage): deep base, one WARM accent for
+   live agent activity, one COOL accent used only for positive
+   resolution. Serif italic = wordmark + card headlines. Mono =
+   all telemetry/numbers. Grotesk (system) = UI.
+   Motion budget: card entrance · live-dot pulse · reveal tick. Nothing else moves.
+─────────────────────────────────────────────────────────────── */
+:root{
+  --base:#0b0e0f;          /* deep cockpit black, faint cool bias */
+  --panel:#12171a;         /* lifted instrument panel */
+  --panel-2:#182024;
+  --sunk:#0d1113;
+  --line:rgba(255,255,255,.07);
+  --line-2:rgba(255,255,255,.13);
+  --ink:#e9edec;
+  --ink-2:#98a3a4;
+  --ink-3:#5d686a;
+  --ink-4:#3a4345;
+  --warm:#f0a24b;          /* LIVE agent activity — the only warm in the room */
+  --warm-2:#ffb968;
+  --warm-soft:rgba(240,162,75,.13);
+  --cool:#54d6ac;          /* positive resolution ONLY */
+  --cool-soft:rgba(84,214,172,.13);
+  --gauge:#3c484c;         /* calm steel gauge fill */
+  --gauge-hi:#7a8f92;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:12px; --r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--base);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  display:flex;justify-content:center;
+}
+button{font-family:inherit;color:inherit;cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--warm);outline-offset:2px;border-radius:4px}
+
+.app{
+  width:100%;max-width:800px;min-height:100vh;
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#0c1012,var(--base) 40%);
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+}
+
+/* ── top rail ─────────────────────────────────────────── */
+.rail{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  background:var(--panel);position:sticky;top:0;z-index:5;
+}
+.wordmark{font-family:var(--serif);font-style:italic;font-size:19px;letter-spacing:.2px}
+.wordmark b{font-weight:600}
+.wordmark .dot{color:var(--warm)}
+.dots{display:flex;gap:7px;align-items:center}
+.agent-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-4);position:relative}
+.agent-dot[data-on="true"]{background:var(--ink-3)}
+.agent-dot[data-live="true"]{background:var(--warm)}
+.agent-dot[data-live="true"]::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1.5px solid var(--warm);animation:pulse 1.4s ease-out infinite;
+}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+.rail .spacer{flex:1}
+.pips{display:flex;gap:5px;align-items:center;font-family:var(--mono);color:var(--ink-3);font-size:12px}
+.pip{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink-3)}
+.pip[data-full="true"]{background:var(--ink-2);border-color:var(--ink-2)}
+.rail button.ctl{
+  font-size:12px;color:var(--ink-2);padding:5px 10px;border:1px solid var(--line-2);
+  border-radius:999px;letter-spacing:.2px;transition:color .15s,border-color .15s,background .15s;
+}
+.rail button.ctl:hover{color:var(--ink);border-color:var(--ink-3)}
+.rail button.ctl[data-active="true"]{color:var(--warm);border-color:var(--warm);background:var(--warm-soft)}
+
+/* ── stage ────────────────────────────────────────────── */
+.stage{flex:1;position:relative;padding:16px}
+.stage.dim .charter{opacity:.24;filter:saturate(.5);pointer-events:none;transition:opacity .35s}
+
+.weekline{
+  font-size:12.5px;color:var(--ink-2);padding:2px 4px 14px;letter-spacing:.1px;
+}
+.weekline strong{color:var(--ink);font-weight:600}
+.weekline .down{color:var(--ink-2)}
+.weekline .strong{color:var(--cool)}
+
+/* skill rows */
+.skills{list-style:none;display:flex;flex-direction:column;gap:8px}
+.skill{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;transition:border-color .15s,background .4s;
+}
+.skill:hover{border-color:var(--line-2)}
+.skill.letgo{opacity:.5}
+.skill.flash{animation:tickflash 1.4s ease-out}
+@keyframes tickflash{
+  0%{background:var(--cool-soft);border-color:var(--cool)}
+  100%{background:var(--panel);border-color:var(--line)}
+}
+.skill.flash-dim{animation:dimflash 1.4s ease-out}
+@keyframes dimflash{0%{background:rgba(255,255,255,.05)}100%{background:var(--panel)}}
+.skill-top{display:flex;align-items:center;gap:10px;cursor:pointer}
+.skill-name{font-weight:600;font-size:14.5px;flex:1;min-width:0}
+.chip{
+  font-size:10.5px;font-weight:600;letter-spacing:.2px;color:var(--ink-2);
+  border:1px solid var(--line-2);border-radius:999px;padding:2px 7px;white-space:nowrap;
+}
+.metrics{display:flex;align-items:baseline;gap:12px;font-family:var(--mono);font-size:12.5px}
+.metrics .ret{color:var(--ink);font-variant-numeric:tabular-nums}
+.metrics .half{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.trend{font-size:13px;width:14px;text-align:center}
+.trend.up{color:var(--cool);opacity:.85}
+.trend.down{color:var(--ink-3)}
+.trend.flat{color:var(--ink-4)}
+.gauge{height:3px;border-radius:2px;background:var(--sunk);margin-top:10px;overflow:hidden}
+.gauge>span{display:block;height:100%;background:var(--gauge);border-radius:2px;transition:width .6s ease}
+.skill.flash .gauge>span{background:var(--cool)}
+
+/* detail */
+.detail{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.skill[data-open="true"] .detail{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.spark{display:block;margin-bottom:12px}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px 16px;margin-bottom:12px}
+.detail-grid .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-3)}
+.detail-grid .v{font-family:var(--mono);font-size:13px;color:var(--ink);margin-top:2px;font-variant-numeric:tabular-nums}
+.why{font-size:12.5px;color:var(--ink-2);font-style:italic;font-family:var(--serif);margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:999px;overflow:hidden}
+.seg button{font-size:12px;padding:6px 13px;color:var(--ink-3);transition:color .15s,background .15s}
+.seg button:not(:last-child){border-right:1px solid var(--line-2)}
+.seg button[data-sel="true"]{color:var(--ink);background:var(--panel-2)}
+
+/* ── overlay: cards + reveal ──────────────────────────── */
+.overlay{position:absolute;inset:16px;display:flex;align-items:flex-start;justify-content:center}
+.card{
+  width:100%;background:var(--panel);border:1px solid var(--line-2);
+  border-radius:var(--r);padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  animation:rise .34s cubic-bezier(.2,.85,.3,1.05);
+}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.kicker{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--warm);display:flex;align-items:center;gap:7px;
+}
+.kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--warm);
+  box-shadow:0 0 8px var(--warm)}
+.clock{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.card h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:20px;line-height:1.25;margin:2px 0 4px}
+.ask{font-size:13px;color:var(--ink-2);margin-bottom:14px}
+
+.files{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:16px}
+@media(min-width:560px){.files{grid-template-columns:1fr 1fr}}
+.file{
+  text-align:left;font-family:var(--mono);font-size:12.5px;color:var(--ink-2);
+  border:1px solid var(--line);background:var(--sunk);border-radius:var(--r-sm);
+  padding:10px 12px;transition:border-color .15s,color .15s,background .15s;
+}
+.file:hover{border-color:var(--ink-3);color:var(--ink)}
+.file[data-sel="true"]{border-color:var(--warm);color:var(--warm-2);background:var(--warm-soft)}
+
+.conf{margin-bottom:16px}
+.conf-lab{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:8px}
+.conf-lab b{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;
+  background:var(--gauge);outline-offset:6px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--warm);
+  border:3px solid var(--panel);box-shadow:0 0 0 1px var(--warm);cursor:grab;
+}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--warm);
+  border:3px solid var(--panel);cursor:grab}
+
+.card-actions{display:flex;align-items:center;gap:14px}
+.primary{
+  background:var(--warm);color:#1a1204;font-weight:600;font-size:13.5px;
+  padding:10px 18px;border-radius:var(--r-sm);transition:filter .15s,opacity .15s;
+}
+.primary:hover{filter:brightness(1.07)}
+.primary:disabled{opacity:.35;cursor:not-allowed}
+.skip{font-size:12.5px;color:var(--ink-3);text-decoration:underline;text-underline-offset:3px}
+.skip:hover{color:var(--ink-2)}
+
+/* veil */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tchip{
+  font-size:13px;padding:9px 16px;border:1px solid var(--line-2);border-radius:999px;
+  color:var(--ink-2);transition:all .15s;
+}
+.tchip:hover{border-color:var(--ink-3);color:var(--ink)}
+.tchip[data-sel="true"]{border-color:var(--warm);color:var(--warm-2);background:var(--warm-soft)}
+.veil-wrap{position:relative;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;margin-bottom:14px}
+.veil-draft{
+  padding:14px;font-family:var(--serif);font-size:13.5px;line-height:1.6;color:var(--ink-2);
+  filter:blur(7px);transition:filter .5s ease;user-select:none;max-height:150px;overflow:hidden;
+}
+.veil-wrap.shown .veil-draft{filter:blur(0);user-select:auto}
+.count{
+  position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:12px;
+  color:var(--warm);background:rgba(0,0,0,.55);padding:2px 8px;border-radius:999px;
+  font-variant-numeric:tabular-nums;
+}
+.veil-wrap.shown .count{display:none}
+.shownow{font-size:12.5px;color:var(--ink-3);text-decoration:underline;text-underline-offset:3px}
+.shownow:hover{color:var(--ink-2)}
+
+/* reveal */
+.reveal .verdict{font-family:var(--serif);font-style:italic;font-size:24px;margin-bottom:8px;line-height:1.2}
+.reveal.called .verdict{color:var(--cool)}
+.reveal.wrong .verdict{color:var(--warm-2)}
+.reveal.none .verdict{color:var(--ink-2)}
+.reveal .answer{font-size:14px;color:var(--ink);margin-bottom:6px}
+.reveal .answer code,.reveal .answer b{font-family:var(--mono);color:var(--ink);font-weight:600;font-style:normal}
+.reveal .explain{font-size:13px;color:var(--ink-2);margin-bottom:16px;line-height:1.5}
+.reveal .tickline{
+  font-family:var(--mono);font-size:12.5px;display:inline-flex;align-items:center;gap:8px;
+  padding:7px 12px;border-radius:999px;
+}
+.reveal.called .tickline{color:var(--cool);background:var(--cool-soft)}
+.reveal.wrong .tickline{color:var(--warm-2);background:var(--warm-soft)}
+.reveal.none .tickline{color:var(--ink-3);background:rgba(255,255,255,.04)}
+
+/* ── live wire ────────────────────────────────────────── */
+.wire{
+  border-top:1px solid var(--line);background:var(--sunk);
+  padding:9px 16px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  min-height:58px;display:flex;flex-direction:column;justify-content:center;gap:3px;
+}
+.wire .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.55}
+.wire .ln:last-child{opacity:1;color:var(--ink-2)}
+.wire .ln .ag{color:var(--warm);opacity:.85}
+.wire .caret{display:inline-block;width:7px;color:var(--warm);animation:blink 1.1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.wire .idle{opacity:.4}
+
+/* ── minimized strip ──────────────────────────────────── */
+.app.min .stage,.app.min .wire{display:none}
+.minbar{display:none}
+.app.min .minbar{
+  display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;
+}
+.minbar .wordmark{font-size:16px}
+.minbar .msg{font-size:12.5px;color:var(--ink-2);flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.minbar .hint{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+
+/* ── demo rig ─────────────────────────────────────────── */
+.rig{
+  position:fixed;bottom:10px;right:10px;z-index:20;
+  display:flex;gap:4px;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:999px;
+  padding:4px 6px;opacity:.28;transition:opacity .2s;font-family:var(--mono);font-size:11px;
+}
+.rig:hover{opacity:1}
+.rig button{color:var(--ink-3);padding:4px 8px;border-radius:999px;transition:color .15s,background .15s}
+.rig button:hover{color:var(--ink);background:var(--panel-2)}
+.rig button[data-active="true"]{color:var(--warm)}
+.rig .sep{width:1px;height:14px;background:var(--line-2)}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="rail">
+    <span class="wordmark"><b>Spotter</b><span class="dot">.</span></span>
+    <div class="dots" id="dots" title="connected agents"></div>
+    <span class="spacer"></span>
+    <div class="pips" id="pips" title="reps left today"></div>
+    <button class="ctl" data-action="pause" id="pauseBtn" title="crunch mode — silence everything">Pause</button>
+    <button class="ctl" data-action="minimize" title="collapse to one line">—</button>
+  </header>
+
+  <main class="stage" id="stage">
+    <section class="charter" id="charter"></section>
+    <div class="overlay" id="overlay" hidden></div>
+  </main>
+
+  <footer class="wire" id="wire"></footer>
+
+  <div class="minbar" data-action="minimize" id="minbar">
+    <span class="wordmark"><b>Spotter</b><span class="dot">.</span></span>
+    <span class="msg" id="minmsg">watching your agents</span>
+    <span class="hint">tap to open</span>
+  </div>
+</div>
+
+<div class="rig" role="group" aria-label="demo controls">
+  <button data-action="demo-code" title="simulate a code task">▸ code</button>
+  <button data-action="demo-writing" title="simulate a writing task">▸ writing</button>
+  <span class="sep"></span>
+  <button data-action="demo-reset" title="reset">⟲</button>
+  <button data-action="demo-auto" id="autoBtn" title="autoplay loop">auto</button>
+</div>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════
+   Spotter daily-driver — one instrument, three states.
+   The agent event stream enters through a SINGLE boundary: dispatch(evt).
+   Today that boundary is fed by a scripted timeline (ENGINE); swapping in
+   a WebSocket to localhost later means only replacing the ENGINE.
+═══════════════════════════════════════════════════════════════ */
+
+// ── charter data (placeholder; a real charter comes from onboarding) ──
+const WHY = {
+  verification:"🛡 Verification",
+  career:"🏛 Career capital",
+  trajectory:"🧭 Trajectory",
+  chosen:"💙 Chosen",
+};
+const SEED = [
+  {id:"debugging", name:"Debugging",       why:"verification", retention:79, half:5.8,  delegated:68, trend:"down", cal:0.72, blind:"async race conditions",   status:"protect", reason:"You still ship the fix yourself when it counts."},
+  {id:"sql",       name:"SQL analytics",   why:"career",       retention:61, half:8.4,  delegated:81, trend:"down", cal:0.64, blind:"window functions",        status:"protect", reason:"Your read on the numbers is career capital."},
+  {id:"sysdesign", name:"System design",   why:"trajectory",   retention:73, half:13.2, delegated:38, trend:"flat", cal:0.79, blind:"back-pressure under load", status:"protect", reason:"It's what the next role is built on."},
+  {id:"review",    name:"Code review",     why:"verification", retention:76, half:10.6, delegated:61, trend:"flat", cal:0.74, blind:"security-relevant diffs", status:"protect", reason:"You're the last read before merge."},
+  {id:"investor",  name:"Investor writing",why:"chosen",       retention:64, half:11.8, delegated:85, trend:"down", cal:0.67, blind:"leading with the wrong metric", status:"protect", reason:"You chose to keep this one close."},
+];
+
+const AGENTS = [
+  {id:"claude",   label:"Claude Code"},
+  {id:"gemini",   label:"Gemini CLI"},
+  {id:"openclaw", label:"OpenClaw"},
+];
+
+// ── state ──
+let skills = clone(SEED);
+const S = {
+  view:"idle",           // idle | live | reveal
+  paused:false,
+  min:false,
+  budgetTotal:2,
+  budgetUsed:0,
+  auto:true,
+  task:null,             // active surfaced task
+  bet:null,              // {file,conf} | {chip}
+  locked:false,
+  skipped:false,
+  silent:null,           // task running with no card (paused/over-budget)
+  userTouched:false,     // suppresses the demo auto-bet if the human acts
+  wire:[],
+  activeAgent:null,
+  flash:null, flashKind:null, flashDelta:"",
+  expanded:null,
+};
+
+const $ = s => document.querySelector(s);
+const el = {
+  app:$("#app"), stage:$("#stage"), charter:$("#charter"), overlay:$("#overlay"),
+  wire:$("#wire"), dots:$("#dots"), pips:$("#pips"), pause:$("#pauseBtn"),
+  minmsg:$("#minmsg"), auto:$("#autoBtn"),
+};
+
+// scheduling: engine timeline + ui intervals, cleared on reset/pause
+let engineTimers = [];
+let uiTimers = [];
+const schedule = (ms,fn)=>{const t=setTimeout(fn,ms);engineTimers.push(t);return t;};
+const clearEngine = ()=>{engineTimers.forEach(clearTimeout);engineTimers=[];clearUI();};
+const clearUI = ()=>{uiTimers.forEach(clearInterval);uiTimers=[];};
+
+function clone(x){return JSON.parse(JSON.stringify(x));}
+function skill(id){return skills.find(s=>s.id===id);}
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const round1=n=>Math.round(n*10)/10;
+
+/* ═══ THE STREAM BOUNDARY ═══════════════════════════════════════
+   Everything the "agent stream" produces arrives here and nowhere else. */
+function dispatch(evt){
+  switch(evt.type){
+    case "task_started":   onTaskStarted(evt); break;
+    case "telemetry":      pushWire(evt.agent, evt.line); pulse(evt.agent); break;
+    case "task_completed": onTaskCompleted(evt); break;
+  }
+}
+
+// ── task lifecycle ──
+function onTaskStarted(t){
+  S.activeAgent = t.agent;
+  pushWire(agentLabel(t.agent), "started · "+t.title);
+  renderDots();
+
+  const blocked = S.paused || S.budgetUsed >= S.budgetTotal;
+  if(blocked){
+    // Interruptions fire only when we can afford them. Otherwise: wire only, decay silently.
+    S.silent = t;
+    return; // stay IDLE — nothing rises
+  }
+  S.budgetUsed++;
+  S.task = t; S.bet=null; S.locked=false; S.skipped=false; S.userTouched=false;
+  setView("live");
+  renderPips();
+
+  if(t.kind==="code") startClock();
+  if(t.kind==="writing") startCountdown(10);
+}
+
+function onTaskCompleted(t){
+  // silent (paused / over budget): decay quietly, no reveal
+  if(S.silent && S.silent.skillId===t.skillId){
+    applyDecay(t.skillId);
+    S.silent=null;
+    pushWire(agentLabel(t.agent), "done · logged, no rep");
+    if(S.view==="idle") renderCharter();
+    return;
+  }
+  // skipped: user opted out earlier; honest quiet decay + dim flash, no reveal
+  if(S.skipped){
+    applyDecay(t.skillId);
+    S.skipped=false;
+    S.flash=t.skillId; S.flashKind="dim"; S.flashDelta="↘";
+    pushWire(agentLabel(t.agent), "done · skipped, decay logged");
+    if(S.view==="idle") renderCharter();
+    return;
+  }
+  if(S.view!=="live"){ return; }
+  clearUI();
+  resolve(t);
+}
+
+function resolve(t){
+  const b = S.bet;
+  let verdict, dHalf, dRet, dCal;
+  if(!b){                                   // no retrieval happened
+    verdict="none";
+    const d=applyDecay(t.skillId); dHalf=d.dHalf; dRet=d.dRet; dCal=0;
+  } else {
+    const correct = t.kind==="code" ? b.file===t.truth : b.chip===t.truth;
+    const conf = t.kind==="code" ? (b.conf/100) : 0.6;
+    verdict = correct ? "called" : "wrong";
+    const d=applyBet(t.skillId, correct, conf); dHalf=d.dHalf; dRet=d.dRet; dCal=d.dCal;
+  }
+  pushWire(agentLabel(t.agent), "done · "+(verdict==="none"?"no rep":verdict==="called"?"rep landed":"rep landed"));
+  renderReveal(t, verdict, {dHalf,dRet,dCal});
+  setView("reveal");
+  // auto-return; the tick lands on the charter row
+  schedule(7000, ()=>{
+    S.flash=t.skillId; S.flashKind = verdict==="none" ? "dim":"up";
+    S.flashDelta = verdict==="none" ? "↘" : (dHalf>=0?"+":"")+round1(dHalf)+"d";
+    S.task=null; S.bet=null; S.activeAgent=null;
+    renderDots();
+    setView("idle");
+  });
+}
+
+// ── model updates ──
+function applyBet(id, correct, conf){
+  const s=skill(id);
+  let dHalf, dRet, dCal;
+  if(correct){ dHalf=+0.8; dRet=+4; dCal=+(0.02+conf*0.05); }
+  else       { dHalf=+0.3; dRet=+1; dCal=-(0.01+conf*0.04); }  // the attempt is still the rep
+  s.half=round1(s.half+dHalf); s.retention=clamp(s.retention+dRet,0,98);
+  s.cal=clamp(s.cal+dCal,0,1); s.trend="up";
+  return {dHalf,dRet,dCal:round1(dCal*100)/100};
+}
+function applyDecay(id){
+  const s=skill(id);
+  const dHalf=-0.4, dRet=-2;
+  s.half=round1(Math.max(0.5,s.half+dHalf)); s.retention=clamp(s.retention+dRet,0,98); s.trend="down";
+  return {dHalf,dRet};
+}
+
+// ── live wire ──
+function pushWire(agent, line){
+  S.wire.push({agent, line});
+  if(S.wire.length>3) S.wire.shift();
+  renderWire();
+  renderMinMsg();
+}
+function agentLabel(a){ const m=AGENTS.find(x=>x.id===a||x.label===a); return m?m.label:a; }
+function pulse(agent){ S.activeAgent = AGENTS.find(x=>x.label===agent||x.id===agent)?.id || S.activeAgent; renderDots(); }
+
+// ═══ RENDER ═══════════════════════════════════════════════════
+function setView(v){
+  S.view=v;
+  el.stage.classList.toggle("dim", v!=="idle");
+  if(v==="idle"){ el.overlay.hidden=true; el.overlay.innerHTML=""; renderCharter(); }
+  else if(v==="live"){ renderCharter(); el.overlay.hidden=false; renderCard(); }
+  else { el.overlay.hidden=false; /* reveal html set by renderReveal */ }
+}
+
+function computeWeek(){
+  const downs = skills.filter(s=>s.trend==="down");
+  const slip = (downs.length?downs:skills).slice().sort((a,b)=>a.retention-b.retention)[0];
+  const strong = skills.slice().sort((a,b)=>b.retention-a.retention)[0];
+  return {slip, strong};
+}
+
+function trendGlyph(t){ return t==="up"?"↗":t==="down"?"↘":"→"; }
+
+function sparkline(id, retention, half){
+  const w=280,h=46,p=3, R0=retention/100, T=half*3, N=44;
+  let pts=[];
+  for(let i=0;i<=N;i++){
+    const t=(i/N)*T, r=R0*Math.pow(0.5,t/half);
+    pts.push([p+(i/N)*(w-2*p), p+(1-r)*(h-2*p)]);
+  }
+  const d=pts.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" ");
+  const area=d+` L ${w-p} ${h-p} L ${p} ${h-p} Z`;
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--gauge-hi)" stop-opacity=".22"/>
+      <stop offset="1" stop-color="var(--gauge-hi)" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#g${id})"/>
+    <path d="${d}" fill="none" stroke="var(--gauge-hi)" stroke-width="1.5"/></svg>`;
+}
+
+function renderCharter(){
+  const {slip,strong}=computeWeek();
+  const week = `<div class="weekline">This week — <strong class="down">${slip.name}</strong> slipping fastest · <strong class="strong">${strong.name}</strong> holding strong.</div>`;
+  const rows = skills.map(s=>{
+    const open = S.expanded===s.id;
+    const flashCls = S.flash===s.id ? (S.flashKind==="dim"?" flash-dim":" flash") : "";
+    return `<li class="skill${s.status==='letgo'?' letgo':''}${flashCls}" data-id="${s.id}" data-open="${open}">
+      <div class="skill-top" data-action="toggle" data-id="${s.id}" role="button" tabindex="0" aria-expanded="${open}">
+        <span class="skill-name">${s.name}</span>
+        <span class="chip">${WHY[s.why]}</span>
+        <span class="metrics">
+          <span class="ret">${Math.round(s.retention)}%</span>
+          <span class="half">t½ ${round1(s.half)}d</span>
+        </span>
+        <span class="trend ${s.trend}" title="${s.trend}">${trendGlyph(s.trend)}</span>
+      </div>
+      <div class="gauge"><span style="width:${Math.round(s.retention)}%"></span></div>
+      <div class="detail">
+        ${sparkline(s.id, s.retention, s.half)}
+        <div class="detail-grid">
+          <div><div class="k">Delegated</div><div class="v">${s.delegated}%</div></div>
+          <div><div class="k">Calibration</div><div class="v">${Math.round(s.cal*100)}%</div></div>
+          <div><div class="k">Blind spot</div><div class="v" style="font-size:12px">${s.blind}</div></div>
+        </div>
+        <div class="why">Why we keep this — ${s.reason}</div>
+        <div class="seg" role="group" aria-label="protection for ${s.name}">
+          <button data-action="status" data-id="${s.id}" data-status="protect" data-sel="${s.status==='protect'}">🔒 Protect</button>
+          <button data-action="status" data-id="${s.id}" data-status="watch"   data-sel="${s.status==='watch'}">👁 Watch</button>
+          <button data-action="status" data-id="${s.id}" data-status="letgo"   data-sel="${s.status==='letgo'}">📦 Let go</button>
+        </div>
+      </div>
+    </li>`;
+  }).join("");
+  el.charter.innerHTML = week + `<ul class="skills">${rows}</ul>`;
+
+  if(S.flash){ const id=S.flash; setTimeout(()=>{S.flash=null;S.flashKind=null;},1500); }
+}
+
+function renderCard(){
+  const t=S.task;
+  if(t.kind==="code"){
+    el.overlay.innerHTML = `
+      <div class="card">
+        <div class="card-head">
+          <span class="kicker">agent working · call your shot</span>
+          <span class="clock" id="clock">0:00</span>
+        </div>
+        <h2>${t.title}</h2>
+        <p class="ask">Where's the bug?</p>
+        <div class="files">
+          ${t.files.map(f=>`<button class="file" data-action="pick" data-file="${f}" data-sel="false">${f}</button>`).join("")}
+        </div>
+        <div class="conf">
+          <div class="conf-lab"><span>How sure?</span><b id="confv">55%</b></div>
+          <input type="range" id="conf" min="0" max="100" value="55" aria-label="confidence">
+        </div>
+        <div class="card-actions">
+          <button class="primary" data-action="lockin" id="lockin" disabled>Lock it in</button>
+          <button class="skip" data-action="skip">Skip — costs nothing</button>
+        </div>
+      </div>`;
+  } else {
+    el.overlay.innerHTML = `
+      <div class="card">
+        <div class="card-head"><span class="kicker">agent working · take the beat</span></div>
+        <h2>${t.title}</h2>
+        <p class="ask">${t.prompt}</p>
+        <div class="chips">
+          ${t.chips.map(c=>`<button class="tchip" data-action="chip" data-chip="${c}" data-sel="false">${c}</button>`).join("")}
+        </div>
+        <div class="veil-wrap" id="veil">
+          <span class="count" id="count">10</span>
+          <div class="veil-draft">${t.draft}</div>
+        </div>
+        <div class="card-actions">
+          <button class="shownow" data-action="shownow">Show now</button>
+          <button class="skip" data-action="skip" style="margin-left:auto">Skip — costs nothing</button>
+        </div>
+      </div>`;
+  }
+}
+
+function renderReveal(t, verdict, d){
+  const head = verdict==="called" ? "Called it."
+             : verdict==="wrong"  ? "Good bet, wrong call."
+             : "Delegated without retrieval.";
+  let answer, tick;
+  if(t.kind==="code"){
+    answer = `The bug was in <code>${t.truth}</code>.`;
+  } else {
+    answer = `The update should lead with <b>${t.truth}</b>.`;
+  }
+  if(verdict==="none"){
+    tick = `retention ${d.dRet}% · decay logged`;
+  } else {
+    const dc = (d.dCal>=0?"+":"")+d.dCal;
+    tick = `t½ ${d.dHalf>=0?"+":""}${round1(d.dHalf)}d · calibration ${dc}`;
+  }
+  el.overlay.innerHTML = `
+    <div class="card reveal ${verdict}">
+      <div class="verdict">${head}</div>
+      <div class="answer">${answer}</div>
+      <div class="explain">${t.explain}</div>
+      <span class="tickline">${verdict==="none"?"↘":verdict==="called"?"↑":"↗"} ${tick}</span>
+    </div>`;
+}
+
+function renderDots(){
+  el.dots.innerHTML = AGENTS.map(a=>{
+    const live = S.view==="live" && S.activeAgent===a.id && !S.paused;
+    return `<span class="agent-dot" data-on="true" data-live="${live}" title="${a.label}${live?' · live':''}"></span>`;
+  }).join("");
+}
+function renderPips(){
+  const left = S.budgetTotal - S.budgetUsed;
+  el.pips.innerHTML = Array.from({length:S.budgetTotal},(_,i)=>
+    `<span class="pip" data-full="${i<left}"></span>`).join("") + `<span style="margin-left:2px">reps</span>`;
+}
+function renderWire(){
+  if(!S.wire.length){
+    el.wire.innerHTML = `<div class="ln idle">· idle · watching ${AGENTS.length} agents<span class="caret">▍</span></div>`;
+    return;
+  }
+  el.wire.innerHTML = S.wire.map((w,i)=>{
+    const last = i===S.wire.length-1;
+    return `<div class="ln"><span class="ag">${w.agent}</span> · ${w.line}${last?'<span class="caret">▍</span>':''}</div>`;
+  }).join("");
+}
+function renderMinMsg(){
+  const {slip}=computeWeek();
+  el.minmsg.textContent = S.paused ? "paused · tasks still logged"
+    : S.view==="live" ? "agent working — a rep is up"
+    : S.wire.length ? S.wire[S.wire.length-1].agent+" · "+S.wire[S.wire.length-1].line
+    : `${slip.name} slipping · all quiet`;
+}
+function renderPause(){
+  el.pause.dataset.active = S.paused;
+  el.pause.textContent = S.paused ? "Paused" : "Pause";
+}
+
+// ── live UI timers ──
+function startClock(){
+  const start=Date.now();
+  const tick=()=>{const el2=$("#clock"); if(!el2)return; const s=Math.floor((Date.now()-start)/1000);
+    el2.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;};
+  tick(); uiTimers.push(setInterval(tick,1000));
+}
+function startCountdown(n){
+  let left=n;
+  const tick=()=>{const c=$("#count"); if(!c)return;
+    c.textContent=left;
+    if(left<=0){ const v=$("#veil"); if(v) v.classList.add("shown"); }
+    left--;
+  };
+  tick(); uiTimers.push(setInterval(tick,1000));
+}
+
+// ═══ USER INPUT (local — never the agent stream) ═══════════════
+document.addEventListener("click", e=>{
+  const btn=e.target.closest("[data-action]");
+  if(!btn) return;
+  const a=btn.dataset.action;
+  if(a==="toggle"){ const id=btn.dataset.id; S.expanded = S.expanded===id?null:id; renderCharter(); }
+  else if(a==="status"){ const s=skill(btn.dataset.id); s.status=btn.dataset.status; renderCharter(); }
+  else if(a==="pick"){ S.userTouched=true; S.bet={file:btn.dataset.file, conf:currentConf()};
+    document.querySelectorAll(".file").forEach(f=>f.dataset.sel=(f===btn));
+    const l=$("#lockin"); if(l) l.disabled=false; }
+  else if(a==="lockin"){ if(!S.bet) return; S.locked=true; S.userTouched=true;
+    S.bet.conf=currentConf(); flashLocked(); }
+  else if(a==="chip"){ S.userTouched=true; S.bet={chip:btn.dataset.chip};
+    document.querySelectorAll(".tchip").forEach(c=>c.dataset.sel=(c===btn)); }
+  else if(a==="shownow"){ const v=$("#veil"); if(v) v.classList.add("shown"); }
+  else if(a==="skip"){ doSkip(); }
+  else if(a==="pause"){ togglePause(); }
+  else if(a==="minimize"){ toggleMin(); }
+  else if(a==="demo-code"){ manualPlay(codeScenario()); }
+  else if(a==="demo-writing"){ manualPlay(writingScenario()); }
+  else if(a==="demo-reset"){ resetAll(); }
+  else if(a==="demo-auto"){ S.auto=!S.auto; el.auto.dataset.active=S.auto; if(S.auto) autoLoop(); else clearEngine(); }
+});
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter"||e.key===" "){ const b=e.target.closest('[data-action="toggle"]');
+    if(b){ e.preventDefault(); b.click(); } }
+});
+document.addEventListener("input", e=>{
+  if(e.target.id==="conf"){ S.userTouched=true; const v=$("#confv"); if(v) v.textContent=e.target.value+"%";
+    if(S.bet&&S.bet.file) S.bet.conf=Number(e.target.value); }
+});
+function currentConf(){ const c=$("#conf"); return c?Number(c.value):55; }
+function flashLocked(){ const l=$("#lockin"); if(l){ l.textContent="Locked ✓"; l.disabled=true; } }
+
+function doSkip(){
+  S.skipped=true; S.bet=null;
+  clearUI();
+  setView("idle");             // return quietly; task keeps running in the wire
+  pushWire(agentLabel(S.task?.agent||"—"), "you skipped — no cost");
+}
+function togglePause(){
+  S.paused=!S.paused;
+  renderPause(); renderDots(); renderMinMsg();
+  if(S.paused && (S.view==="live"||S.view==="reveal")){
+    // honored instantly: dismiss any card, no penalty
+    clearUI(); S.bet=null; S.task=null; setView("idle");
+  }
+}
+function toggleMin(){ S.min=!S.min; el.app.classList.toggle("min",S.min); renderMinMsg(); }
+
+// ═══ SCENARIOS (feed the dispatch boundary) ═══════════════════
+function codeScenario(){
+  const files=["src/auth/session.ts","src/auth/token.ts","src/middleware/verify.ts","src/db/users.ts","src/util/hash.ts","tests/auth.test.ts"];
+  const t={type:"task_started",kind:"code",agent:"claude",skillId:"debugging",
+    title:"Fix the failing auth test suite",files,truth:"src/auth/token.ts"};
+  const done={type:"task_completed",kind:"code",agent:"claude",skillId:"debugging",truth:"src/auth/token.ts",
+    explain:"Token TTL was compared in seconds against a millisecond timestamp — every session expired on issue."};
+  return {
+    skillId:"debugging",
+    steps:[
+      [0,    t],
+      [2600, {type:"telemetry",agent:"Claude Code",line:"read src/auth/session.ts"}],
+      [5200, {type:"telemetry",agent:"Claude Code",line:"ran pnpm test — 3 failing"}],
+      [8000, {type:"telemetry",agent:"Claude Code",line:"edited src/auth/token.ts"}],
+      [10800,{type:"telemetry",agent:"Claude Code",line:"ran pnpm test — 1 failing"}],
+      [13200,{type:"telemetry",agent:"Claude Code",line:"edited src/middleware/verify.ts"}],
+      [15400,{type:"telemetry",agent:"Claude Code",line:"ran pnpm test — all passing"}],
+      [16200, done],
+    ],
+    autoBet:[11500, ()=>{ // demo only: simulate a confident, correct call
+      if(S.userTouched||S.view!=="live") return;
+      S.bet={file:"src/auth/token.ts",conf:72};
+      document.querySelectorAll(".file").forEach(f=>f.dataset.sel=(f.dataset.file==="src/auth/token.ts"));
+      const c=$("#conf"); if(c){c.value=72; const v=$("#confv"); if(v)v.textContent="72%";}
+      flashLocked();
+    }],
+  };
+}
+function writingScenario(){
+  const t={type:"task_started",kind:"writing",agent:"gemini",skillId:"investor",
+    title:"Draft the seed investor update",prompt:"Which number leads?",
+    chips:["ARR","Runway","MoM growth"],truth:"MoM growth",
+    draft:"Team — strong month. We crossed $1.2M ARR with 18 months of runway in the bank, and month over month we're compounding faster than last quarter. Here's what's driving it, what broke, and where we point the next dollar…"};
+  const done={type:"task_completed",kind:"writing",agent:"gemini",skillId:"investor",truth:"MoM growth",
+    explain:"For a seed update, lead with the rate of change — MoM growth signals momentum louder than an absolute ARR figure."};
+  return {
+    skillId:"investor",
+    steps:[
+      [0,    t],
+      [3000, {type:"telemetry",agent:"Gemini CLI",line:"drafting investor_update.md"}],
+      [6000, {type:"telemetry",agent:"Gemini CLI",line:"214 words · revised opening"}],
+      [9000, {type:"telemetry",agent:"Gemini CLI",line:"tightened the ask"}],
+      [11000, done],
+    ],
+    autoBet:[6500, ()=>{ // demo only: simulate a wrong bet, to show that verdict style
+      if(S.userTouched||S.view!=="live") return;
+      S.bet={chip:"ARR"};
+      document.querySelectorAll(".tchip").forEach(c=>c.dataset.sel=(c.dataset.chip==="ARR"));
+    }],
+  };
+}
+
+function playScenario(sc){
+  sc.steps.forEach(([ms,evt])=> schedule(ms, ()=>dispatch(evt)) );
+  if(sc.autoBet && S.auto) schedule(sc.autoBet[0], sc.autoBet[1]);
+  return sc.steps[sc.steps.length-1][0]; // total duration
+}
+// Manual demo trigger: stop autoplay, clear pending timers, play one scenario cleanly.
+function manualPlay(sc){
+  if(S.auto){ S.auto=false; el.auto.dataset.active=false; }
+  clearEngine();
+  if(S.view!=="idle") setView("idle");
+  playScenario(sc);
+}
+
+// ═══ AUTOPLAY LOOP (hands-free) ═══════════════════════════════
+function autoLoop(){
+  clearEngine();
+  resetSoft();            // fresh "day": budget back, idle
+  // idle 4s → code (~16s) → reveal 7s → idle → writing (~11s) → reveal 7s → loop
+  schedule(4000, ()=>{
+    const codeDur = playScenario(codeScenario());
+    schedule(codeDur+7200, ()=>{
+      const wDur = playScenario(writingScenario());
+      schedule(wDur+7600, ()=>{ if(S.auto) autoLoop(); });
+    });
+  });
+}
+
+// ═══ RESET ════════════════════════════════════════════════════
+function resetSoft(){        // new day: keep charter numbers, refill budget, go idle
+  clearEngine();
+  S.budgetUsed=0; S.paused=false; S.task=null; S.bet=null; S.silent=null;
+  S.skipped=false; S.activeAgent=null;
+  renderPause(); renderPips(); renderDots();
+  setView("idle");
+}
+function resetAll(){         // full reset: charter back to seed too
+  clearEngine();
+  skills=clone(SEED);
+  Object.assign(S,{view:"idle",paused:false,budgetUsed:0,task:null,bet:null,silent:null,
+    skipped:false,activeAgent:null,wire:[],expanded:null,flash:null});
+  renderPause(); renderPips(); renderDots(); renderWire(); renderMinMsg();
+  setView("idle");
+  if(S.auto) autoLoop();
+}
+
+// ═══ BOOT ═════════════════════════════════════════════════════
+renderDots(); renderPips(); renderPause(); renderWire(); renderMinMsg();
+el.auto.dataset.active = S.auto;
+setView("idle");
+autoLoop();
+</script>
+</body>
+</html>
