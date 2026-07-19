@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotter — chat left, learn right</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/live.css">
+</head>
+<body>
+  <div class="live-topbar">
+    <a class="brand" href="/">spotter<span>.</span></a>
+    <div class="live-sub">You delegate on the left. You learn on the right. In real time.</div>
+    <div class="live-mode" id="mode">· connecting…</div>
+  </div>
+
+  <div class="split">
+    <!-- LEFT: the coding agent you delegate to -->
+    <section class="agent-pane">
+      <div class="pane-head">
+        <span class="dot"></span> your AI coding agent
+      </div>
+      <div class="chat" id="chat">
+        <div class="msg agent">
+          <div class="bubble">Hey — I'm your coding agent. Tell me what to build and I'll ship it.
+            While I work, Spotter (right) will quietly teach you the decisions worth understanding.</div>
+        </div>
+      </div>
+      <div class="suggests" id="suggests">
+        <button data-p="Add retry with exponential backoff to my Stripe payment webhook">↻ retry + backoff</button>
+        <button data-p="Add JWT auth middleware to protect my Express API routes">🔐 JWT auth</button>
+        <button data-p="My users list page is slow — fix the N+1 query">🐢 fix N+1 query</button>
+        <button data-p="Add a debounce to my search input so it doesn't fire on every keystroke">⌨ debounce search</button>
+      </div>
+      <form class="composer" id="composer">
+        <input id="input" autocomplete="off" placeholder="Ask your agent to build something…">
+        <button type="submit" id="send">Send</button>
+      </form>
+    </section>
+
+    <!-- RIGHT: Spotter, framed as the phone / second screen -->
+    <section class="spotter-pane">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="sp-head">
+            <div class="sp-brand">spotter<span>.</span></div>
+            <div class="sp-silence">
+              <b id="seen">0</b> actions · <b class="sf" id="surfaced">0</b> worth learning
+            </div>
+          </div>
+          <div class="sp-caption">The filter, not the feed. Silence is a feature.</div>
+          <div class="sp-cards" id="spcards">
+            <div class="sp-empty" id="empty">
+              Watching your session…<br>
+              A card appears only when your agent makes a decision worth your attention.
+            </div>
+          </div>
+          <a class="sp-phone-link" id="phoneLink" target="_blank">📱 send these to my phone</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const chat = $('chat'), spcards = $('spcards');
+    let sessionId = null;
+    const history = [];
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    // minimal markdown: fenced code blocks + `inline` + **bold**
+    function md(t) {
+      const parts = String(t).split(/```/);
+      return parts.map((seg, i) => {
+        if (i % 2 === 1) {
+          const body = seg.replace(/^[a-z]*\n/i, '');
+          return `<pre><code>${esc(body)}</code></pre>`;
+        }
+        return esc(seg)
+          .replace(/`([^`]+)`/g, '<code class="inl">$1</code>')
+          .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+          .replace(/\n/g, '<br>');
+      }).join('');
+    }
+
+    function addMsg(role, text, opts = {}) {
+      const el = document.createElement('div');
+      el.className = 'msg ' + role;
+      el.innerHTML = `<div class="bubble">${opts.raw ? text : md(text)}</div>`;
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+      return el;
+    }
+
+    function setState(seen, surfaced) {
+      $('seen').textContent = seen;
+      $('surfaced').textContent = surfaced;
+    }
+
+    function renderCard(card) {
+      $('empty').style.display = 'none';
+      const el = document.createElement('div');
+      el.className = 'sp-card';
+      el.innerHTML = `
+        <div class="chips">
+          <span class="chip chip-domain">${esc(card.domain || '')}</span>
+          <span class="chip chip-imp">importance ${card.importance ?? ''}/5</span>
+        </div>
+        <h3>${esc(card.headline)}</h3>
+        <div class="what">${esc(card.what_happened)}</div>
+        <div class="why">${esc(card.why_it_matters)}</div>
+        <div class="qa">
+          <div class="q">🤔 ${esc(card.question)}</div>
+          <div class="a">${esc(card.answer)}</div>
+          <div class="qa-actions">
+            <button class="btn btn-sm btn-reveal">Think, then reveal</button>
+            <button class="btn btn-sm btn-gotit">Got it ✓</button>
+          </div>
+        </div>`;
+      const qa = el.querySelector('.qa');
+      el.querySelector('.btn-reveal').onclick = () => qa.classList.add('revealed');
+      el.querySelector('.btn-gotit').onclick = () => qa.classList.add('done');
+      spcards.appendChild(el);
+      spcards.scrollTop = spcards.scrollHeight;
+      if (navigator.vibrate) navigator.vibrate(60);
+    }
+
+    let seenCount = 0, surfacedCount = 0;
+
+    async function boot() {
+      const r = await fetch('/session', { method: 'POST' });
+      const j = await r.json();
+      sessionId = j.id;
+      $('phoneLink').href = `/session.html?id=${sessionId}`;
+      $('phoneLink').textContent = '📱 open on my phone (session ' + sessionId + ')';
+    }
+
+    async function send(text) {
+      if (!text.trim() || !sessionId) return;
+      addMsg('user', text);
+      history.push({ role: 'user', text });
+      const thinking = addMsg('agent', '<span class="typing"><i></i><i></i><i></i></span>', { raw: true });
+      $('send').disabled = true;
+
+      seenCount += 2; setState(seenCount, surfacedCount);
+
+      try {
+        const resp = await fetch(`/agent/chat?session=${sessionId}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, history }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || data.error || 'agent failed');
+
+        thinking.querySelector('.bubble').innerHTML = md(data.reply);
+        chat.scrollTop = chat.scrollHeight;
+        history.push({ role: 'agent', text: data.reply });
+        $('mode').textContent = data.live ? '· live · gemini' : '· offline demo · set GEMINI_API_KEY for live';
+
+        // Cards arrive a beat after the code — feels like Spotter noticing.
+        (data.cards || []).forEach((card, i) => {
+          setTimeout(() => {
+            surfacedCount++; setState(seenCount, surfacedCount);
+            renderCard(card);
+          }, 500 + i * 900);
+        });
+      } catch (err) {
+        thinking.querySelector('.bubble').innerHTML =
+          `<span class="err">⚠ ${esc(err.message)}</span>`;
+      } finally {
+        $('send').disabled = false;
+        $('input').focus();
+      }
+    }
+
+    $('composer').addEventListener('submit', e => {
+      e.preventDefault();
+      const v = $('input').value; $('input').value = '';
+      send(v);
+    });
+    $('suggests').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      send(b.dataset.p);
+    });
+
+    boot();
+  </script>
+</body>
+</html>

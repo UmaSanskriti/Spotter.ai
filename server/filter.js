@@ -2,7 +2,7 @@
 // "does this matter, and is it above this user's level?"
 // Uses the REST API directly (stable surface, no SDK version surprises).
 
-const MODEL = process.env.SPOTTER_MODEL || 'gemini-3.1-pro';
+const MODEL = process.env.SPOTTER_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const API_KEY = process.env.GEMINI_API_KEY || '';
 const CARD_BUDGET_MS = Number(process.env.SPOTTER_CARD_BUDGET_MS || 90_000); // max ~1 card / 90s
 
