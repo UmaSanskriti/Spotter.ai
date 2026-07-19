@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": ". ~/.spotter/env && ~/.spotter/spotter-hook.sh PostToolUse" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": ". ~/.spotter/env && ~/.spotter/spotter-hook.sh Stop" }
+        ]
+      }
+    ]
+  }
+}

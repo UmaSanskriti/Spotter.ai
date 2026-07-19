@@ -4,35 +4,57 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Spotter — your agent codes. You still learn.</title>
+  <meta name="description" content="Spotter watches your AI coding agent and turns its decisions into moments you learn from — on your phone, while the agent works.">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="wrap">
-    <div class="hero">
+    <nav class="nav glass">
       <div class="logo">spotter<span>.</span></div>
-      <p class="tagline">Your AI agent does the work. Spotter watches the session,<br>
-        picks the decisions worth understanding, and streams them to your second screen —<br>
-        so you come out of every delegated task knowing more, not less.</p>
+      <a class="btn btn-sm btn-ghost" href="/onboard.html">Sign in</a>
+    </nav>
 
-      <div class="cta-col">
-        <a class="btn btn-primary" href="/session.html?mode=replay">▶ &nbsp;Watch a live session</a>
-        <button class="btn btn-ghost" id="start">Start your own session</button>
+    <div class="hero">
+      <h1>Your agent codes.<br><em>You still learn.</em></h1>
+      <p class="tagline">Spotter watches your AI coding agent work, picks out the few decisions
+        worth understanding, and sends them to your phone — while the agent does the typing.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/session.html?mode=replay&intro=1">▶&nbsp; Watch the demo</a>
+        <a class="btn btn-ghost" href="/onboard.html">Get started — it's free</a>
+      </div>
+
+      <div class="float-strip">
+        <span class="float-chip glass">🧠 built from <b>your</b> resume</span>
+        <span class="float-chip glass">🤫 47 moves → 5 cards</span>
+        <span class="float-chip glass">📱 lives on your second screen</span>
       </div>
     </div>
 
     <div class="how">
-      <div class="how-step"><b>1 · Observe</b><span>A one-line hook streams your Claude Code (or any agent's) session to Spotter. No agent modified.</span></div>
-      <div class="how-step"><b>2 · Filter</b><span>Gemini judges every decision against <i>your</i> profile: does this matter, and is it above your level? It made 47 moves — you see 5. Silence is a feature.</span></div>
-      <div class="how-step"><b>3 · Learn</b><span>Cards land on your phone or second monitor while the agent grinds: what happened, why it matters, one question. Dead air becomes expertise.</span></div>
+      <div class="how-card glass">
+        <div class="emoji">👀</div>
+        <b>Observe</b>
+        <span>One line wires Spotter into Claude Code or any coding agent. Nothing about your agent changes.</span>
+      </div>
+      <div class="how-card glass">
+        <div class="emoji">🎯</div>
+        <b>Filter</b>
+        <span>Gemini judges every decision against <i>your</i> skill profile. Below your level? Silence. Silence is a feature.</span>
+      </div>
+      <div class="how-card glass">
+        <div class="emoji">📈</div>
+        <b>Learn</b>
+        <span>Cards land while the agent grinds: what happened, why it matters, one question. Answer, level up.</span>
+      </div>
     </div>
-  </div>
 
-  <script>
-    document.getElementById('start').onclick = async () => {
-      const r = await fetch('/session', { method: 'POST' });
-      const { id } = await r.json();
-      location.href = `/session.html?id=${id}&mode=live&host=1`;
-    };
-  </script>
+    <div class="statline glass">
+      The agent made <b>47 moves</b>. You saw <b>5 cards</b>. You lost <b>0 minutes</b> —
+      it was all time you'd have spent watching a spinner.
+    </div>
+
+    <p class="foot">Built with Google Gemini · Stanford × DeepMind Hackathon 2026</p>
+  </div>
 </body>
 </html>

@@ -7,16 +7,59 @@ const store = require('./store');
 const { preFilter } = require('./prefilter');
 const { runFilter, diag } = require('./filter');
 
+const { buildProfile } = require('./profile');
+
 const app = express();
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '12mb' })); // resume PDFs arrive base64 in JSON
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const DEMO = JSON.parse(fs.readFileSync(path.join(__dirname, 'demo-session.json'), 'utf8'));
 
+// ---------- users & onboarding ----------
+
+app.post('/user', (req, res) => {
+  const { email, name } = req.body || {};
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const user = store.createUser({ email, name });
+  res.json({ id: user.id, name: user.name });
+});
+
+app.post('/user/:id/resume', async (req, res) => {
+  const user = store.getUser(req.params.id);
+  if (!user) return res.status(404).json({ error: 'no such user' });
+  const { text, fileB64, mime } = req.body || {};
+  if (!text && !fileB64) return res.status(400).json({ error: 'text or fileB64 required' });
+  try {
+    const profile = await buildProfile({ text, fileB64, mime });
+    if (!profile) return res.status(502).json({ error: 'profile generation failed — check /healthz' });
+    Object.assign(user, profile);
+    res.json({ role: user.role, summary: user.summary, domains: user.domains });
+  } catch (err) {
+    console.error('resume error', err.message);
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
+// Level overrides from the review screen — the user's word is absolute.
+app.post('/user/:id/profile', (req, res) => {
+  const user = store.getUser(req.params.id);
+  if (!user) return res.status(404).json({ error: 'no such user' });
+  const overrides = req.body?.domains || [];
+  for (const o of overrides) {
+    const d = (user.domains || []).find(d => d.key === o.key);
+    if (d && o.level >= 1 && o.level <= 3) d.level = o.level;
+  }
+  res.json({ domains: user.domains });
+});
+
 // ---------- sessions ----------
 
 app.post('/session', (req, res) => {
-  const session = store.createSession({ profile: req.body?.profile });
+  const user = req.body?.userId ? store.getUser(req.body.userId) : null;
+  const session = store.createSession({
+    profile: req.body?.profile || store.profileMap(user) || undefined,
+  });
+  if (user) { session.userId = user.id; session.userName = user.name; session.userRole = user.role; }
   res.json({ id: session.id, joinUrl: joinUrl(req, session.id) });
 });
 

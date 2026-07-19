@@ -15,9 +15,27 @@ const DEFAULT_PROFILE = {
 };
 
 const sessions = new Map();
+const users = new Map();
 
 function newId() {
   return crypto.randomBytes(4).toString('hex');
+}
+
+function createUser({ email, name }) {
+  const id = newId();
+  const user = { id, email, name, createdAt: Date.now(), role: null, summary: null, domains: null };
+  users.set(id, user);
+  return user;
+}
+
+function getUser(id) {
+  return users.get(id);
+}
+
+// Flatten the rich domain list into the {key: level} map the filter consumes.
+function profileMap(user) {
+  if (!user?.domains?.length) return null;
+  return Object.fromEntries(user.domains.map(d => [d.key, d.level]));
 }
 
 function createSession(opts = {}) {
@@ -29,7 +47,8 @@ function createSession(opts = {}) {
     eventsKept: 0,        // survived the pre-filter
     keptEvents: [],       // ring buffer of recent kept events (context for the filter)
     cards: [],            // surfaced cards, seq-numbered
-    profile: { ...DEFAULT_PROFILE, ...(opts.profile || {}) },
+    // A user's own profile replaces the default wholesale — their domains, not ours.
+    profile: opts.profile ? { ...opts.profile } : { ...DEFAULT_PROFILE },
     lastCardAt: 0,        // budget: max ~1 card / 90s
     listeners: new Set(), // SSE responses
   };
@@ -80,4 +99,5 @@ function broadcast(session, payload) {
 module.exports = {
   createSession, getSession, recordEvent, keepEvent, addCard,
   publicState, broadcast, DEFAULT_PROFILE,
+  createUser, getUser, profileMap,
 };

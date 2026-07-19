@@ -8,12 +8,12 @@
 </head>
 <body>
   <div class="wrap session-wrap">
-    <div class="topbar">
-      <div class="brand">spotter<span>.</span></div>
+    <div class="topbar glass">
+      <a class="brand" href="/" style="text-decoration:none;color:inherit">spotter<span>.</span></a>
       <div class="session-meta" id="meta"></div>
     </div>
 
-    <div class="silence">
+    <div class="silence glass">
       <div class="nums">
         <div class="stat"><div class="n" id="seen">0</div><div class="l">agent actions</div></div>
         <div class="stat surfaced"><div class="n" id="surfaced">0</div><div class="l">surfaced to you</div></div>
@@ -23,7 +23,7 @@
 
     <div class="ticker" id="ticker"></div>
 
-    <div id="join" class="join-panel" style="display:none">
+    <div id="join" class="join-panel glass" style="display:none">
       <img id="qr" alt="QR code to join this session">
       <p>Scan with your phone — cards land there while your agent works here.</p>
       <code id="joinurl"></code>
@@ -65,7 +65,7 @@
     function renderCard(card) {
       $('empty').style.display = 'none';
       const el = document.createElement('div');
-      el.className = 'card';
+      el.className = 'card glass';
       el.innerHTML = `
         <div class="chips">
           <span class="chip chip-domain">${esc(card.domain || '')}</span>
@@ -107,6 +107,48 @@
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ---------- demo intro: 3 beats for cold viewers, then the replay rolls ----------
+    const INTRO_BEATS = [
+      { emoji: '👋', h: 'Meet Sam', p: 'Sam uploaded a resume once. Gemini turned it into a skill profile — strong on testing, still building queues and security.' },
+      { emoji: '🤖', h: 'Sam\'s agent gets to work', p: 'A coding agent is building a webhook service right now. Sam\'s phone just became the second screen.' },
+      { emoji: '🎯', h: 'Spotter filters everything', p: 'Only decisions above Sam\'s level get through. The agent makes 47 moves — watch how few you see.' },
+    ];
+
+    function runIntro(done) {
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="intro-card glass">
+          <div class="emoji" id="in-emoji"></div>
+          <h2 id="in-h"></h2>
+          <p id="in-p"></p>
+          <div class="intro-dots" id="in-dots">
+            ${INTRO_BEATS.map(() => '<div class="dot"></div>').join('')}
+          </div>
+          <div class="intro-skip"><button class="btn btn-sm btn-ghost" id="in-skip">Skip intro →</button></div>
+        </div>`;
+      document.body.appendChild(overlay);
+      let i = 0, timer;
+      const dots = overlay.querySelectorAll('#in-dots .dot');
+      function beat() {
+        if (i >= INTRO_BEATS.length) return finish();
+        const b = INTRO_BEATS[i];
+        overlay.querySelector('#in-emoji').textContent = b.emoji;
+        overlay.querySelector('#in-h').textContent = b.h;
+        overlay.querySelector('#in-p').textContent = b.p;
+        dots.forEach((d, n) => d.classList.toggle('on', n === i));
+        i++;
+        timer = setTimeout(beat, 3400);
+      }
+      function finish() {
+        clearTimeout(timer);
+        overlay.remove();
+        done();
+      }
+      overlay.querySelector('#in-skip').onclick = finish;
+      beat();
     }
 
     // ---------- replay mode: the artifact any judge can open cold ----------
@@ -155,7 +197,13 @@
       };
     }
 
-    mode === 'live' && sessionId ? live() : replay();
+    if (mode === 'live' && sessionId) {
+      live();
+    } else if (params.get('intro') === '1') {
+      runIntro(replay);
+    } else {
+      replay();
+    }
   </script>
 </body>
 </html>

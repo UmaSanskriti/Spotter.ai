@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotter — get set up</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav glass">
+      <a class="logo" href="/" style="text-decoration:none;color:inherit">spotter<span>.</span></a>
+      <a class="btn btn-sm btn-ghost" href="/session.html?mode=replay&intro=1">Watch the demo</a>
+    </nav>
+
+    <div class="steps">
+
+      <!-- Step 1: welcome -->
+      <div class="step-card glass" id="step-intro">
+        <h2>Two minutes, and Spotter knows what to teach you 🌱</h2>
+        <p class="sub">Here's the deal: your AI agent is about to do a lot of work you'll never see.
+          Spotter reads your resume once, figures out what you already know, and from then on
+          only interrupts you for decisions <b>above your level</b>. Everything else stays silent.</p>
+        <div class="step-actions">
+          <button class="linkish" id="skip-onboard">Skip — just start a session</button>
+          <button class="btn btn-primary" id="to-signup">Let's go</button>
+        </div>
+      </div>
+
+      <!-- Step 2: sign up -->
+      <div class="step-card glass" id="step-signup" style="display:none">
+        <h2>First, who are you? ✌️</h2>
+        <p class="sub">No password needed — this just keeps your profile yours.</p>
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" placeholder="Sam Rivera" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="sam@example.com" autocomplete="email">
+        </div>
+        <div class="step-actions">
+          <button class="btn btn-primary" id="to-resume">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: resume -->
+      <div class="step-card glass" id="step-resume" style="display:none">
+        <h2>Now, your resume 📄</h2>
+        <p class="sub">Gemini reads it and drafts your skill profile — what you're strong in,
+          what you're still building. You'll get to correct it before anything starts.</p>
+        <div class="drop" id="drop">
+          <div class="big">📎</div>
+          <p><b>Drop your resume here</b> or tap to choose<br>PDF or plain text</p>
+          <input type="file" id="file" accept=".pdf,.txt,.md" style="display:none">
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label for="paste">…or paste it</label>
+          <textarea id="paste" rows="4" placeholder="Paste your resume or a LinkedIn summary…"></textarea>
+        </div>
+        <div class="step-actions">
+          <button class="btn btn-primary" id="build-profile">Build my profile</button>
+        </div>
+      </div>
+
+      <!-- Step 3.5: loading -->
+      <div class="step-card glass" id="step-loading" style="display:none">
+        <div class="loadbox">
+          <div class="spinner"></div>
+          <div class="loadmsg" id="loadmsg">Reading your resume…</div>
+        </div>
+      </div>
+
+      <!-- Step 4: review -->
+      <div class="step-card glass" id="step-review" style="display:none">
+        <h2>Here's what Gemini sees 👇</h2>
+        <div class="role-pill" id="role"></div>
+        <p class="sub" id="summary"></p>
+        <div id="domains"></div>
+        <p class="dots-hint">tap the dots to correct a level — your word is final</p>
+        <div class="step-actions">
+          <button class="btn btn-green" id="start-session">Start my first session →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const show = id => {
+      ['step-intro','step-signup','step-resume','step-loading','step-review']
+        .forEach(s => $(s).style.display = s === id ? 'block' : 'none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    let userId = null;
+    let domains = [];
+    let fileData = null; // {b64, mime}
+
+    $('to-signup').onclick = () => show('step-signup');
+
+    $('skip-onboard').onclick = async () => {
+      const r = await fetch('/session', { method: 'POST' });
+      const { id } = await r.json();
+      location.href = `/session.html?id=${id}&mode=live&host=1`;
+    };
+
+    $('to-resume').onclick = async () => {
+      const email = $('email').value.trim(), name = $('name').value.trim();
+      if (!email) return $('email').focus();
+      const r = await fetch('/user', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      });
+      const u = await r.json();
+      userId = u.id;
+      localStorage.setItem('spotterUser', JSON.stringify({ id: u.id, name }));
+      show('step-resume');
+    };
+
+    // file handling
+    const drop = $('drop'), fileInput = $('file');
+    drop.onclick = () => fileInput.click();
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+    drop.ondragleave = () => drop.classList.remove('over');
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); handleFile(e.dataTransfer.files[0]); };
+    fileInput.onchange = () => handleFile(fileInput.files[0]);
+
+    function handleFile(f) {
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const b64 = reader.result.split(',')[1];
+        fileData = { b64, mime: f.type || 'application/pdf' };
+        drop.classList.add('hasfile');
+        drop.querySelector('p').innerHTML = `<b>✓ ${f.name}</b><br>ready to go`;
+      };
+      reader.readAsDataURL(f);
+    }
+
+    const LOAD_MSGS = ['Reading your resume…', 'Mapping your domains…', 'Judging levels (be honest, it is)…', 'Almost there…'];
+    $('build-profile').onclick = async () => {
+      const text = $('paste').value.trim();
+      if (!fileData && !text) return alert('Drop a resume or paste some text first.');
+      show('step-loading');
+      let i = 0;
+      const cycle = setInterval(() => $('loadmsg').textContent = LOAD_MSGS[++i % LOAD_MSGS.length], 2200);
+      try {
+        const r = await fetch(`/user/${userId}/resume`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fileData ? { fileB64: fileData.b64, mime: fileData.mime, text } : { text }),
+        });
+        clearInterval(cycle);
+        if (!r.ok) throw new Error((await r.json()).error || 'failed');
+        const p = await r.json();
+        domains = p.domains;
+        $('role').textContent = p.role;
+        $('summary').textContent = p.summary;
+        renderDomains();
+        show('step-review');
+      } catch (err) {
+        clearInterval(cycle);
+        alert('Profile generation hit a snag: ' + err.message + '\nYou can still start with a default profile.');
+        show('step-resume');
+      }
+    };
+
+    function renderDomains() {
+      $('domains').innerHTML = '';
+      domains.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'domain-row';
+        row.innerHTML = `
+          <div class="d-info"><b>${esc(d.label)}</b><span>${esc(d.evidence)}</span></div>
+          <div class="dots" title="tap to set level">
+            ${[1,2,3].map(n => `<div class="dot ${n <= d.level ? 'on' : ''}" data-n="${n}"></div>`).join('')}
+          </div>`;
+        row.querySelectorAll('.dot').forEach(dot => {
+          dot.onclick = () => {
+            d.level = Number(dot.dataset.n);
+            row.querySelectorAll('.dot').forEach(x =>
+              x.classList.toggle('on', Number(x.dataset.n) <= d.level));
+          };
+        });
+        $('domains').appendChild(row);
+      });
+    }
+
+    $('start-session').onclick = async () => {
+      await fetch(`/user/${userId}/profile`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domains: domains.map(d => ({ key: d.key, level: d.level })) }),
+      });
+      const r = await fetch('/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const { id } = await r.json();
+      location.href = `/session.html?id=${id}&mode=live&host=1`;
+    };
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+  </script>
+</body>
+</html>

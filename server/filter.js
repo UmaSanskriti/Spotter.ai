@@ -1,29 +1,9 @@
 // Stage 2 of the Spotter Filter: Gemini decides, per decision,
 // "does this matter, and is it above this user's level?"
-// Uses the REST API directly (stable surface, no SDK version surprises).
 
-// Model candidates tried in order; first one that answers gets pinned for the process lifetime.
-const MODEL_CANDIDATES = [
-  process.env.SPOTTER_MODEL,
-  'gemini-3.1-pro',
-  'gemini-flash-latest',
-  'gemini-2.5-flash',
-].filter(Boolean);
-let pinnedModel = null;
-const API_KEY = process.env.GEMINI_API_KEY || '';
+const { generateJSON, state: gemini } = require('./gemini');
+
 const CARD_BUDGET_MS = Number(process.env.SPOTTER_CARD_BUDGET_MS || 90_000); // max ~1 card / 90s
-
-// Diagnostics surfaced at /healthz — so a broken deploy tells you *why* from the outside.
-const diag = {
-  geminiKeySet: Boolean(API_KEY),
-  model: null,
-  cardBudgetMs: CARD_BUDGET_MS,
-  filterCalls: 0,
-  cardsSurfaced: 0,
-  suppressed: { budget: 0, belowBar: 0 },
-  lastError: null,
-  lastVerdict: null,
-};
 
 const CARD_SCHEMA = {
   type: 'OBJECT',
@@ -40,6 +20,18 @@ const CARD_SCHEMA = {
   },
   required: ['surface', 'importance', 'domain', 'above_user_level', 'headline',
              'what_happened', 'why_it_matters', 'question', 'answer'],
+};
+
+// Diagnostics surfaced at /healthz — so a broken deploy tells you *why* from the outside.
+const diag = {
+  get geminiKeySet() { return gemini.keySet; },
+  get model() { return gemini.model; },
+  get lastError() { return gemini.lastError; },
+  cardBudgetMs: CARD_BUDGET_MS,
+  filterCalls: 0,
+  cardsSurfaced: 0,
+  suppressed: { budget: 0, belowBar: 0 },
+  lastVerdict: null,
 };
 
 function buildPrompt(session, event) {
@@ -82,57 +74,16 @@ function summarizeEvent(event) {
   return parts.join(' | ') || JSON.stringify(event).slice(0, 400);
 }
 
-async function callGemini(model, body) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-  return fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-
 async function runFilter(session, event) {
-  if (!API_KEY) {
-    diag.lastError = 'GEMINI_API_KEY not set — filter disabled, ingest still works';
-    return null;
-  }
+  if (!gemini.keySet) return null; // ingest still works, cards don't fire
   if (Date.now() - session.lastCardAt < CARD_BUDGET_MS) {
     diag.suppressed.budget += 1;
     return null; // hard budget: max ~1 card per window
   }
 
-  const body = {
-    contents: [{ role: 'user', parts: [{ text: buildPrompt(session, event) }] }],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: CARD_SCHEMA,
-      temperature: 0.2,
-    },
-  };
-
   diag.filterCalls += 1;
-  let resp = null;
-  const candidates = pinnedModel ? [pinnedModel] : MODEL_CANDIDATES;
-  for (const model of candidates) {
-    resp = await callGemini(model, body);
-    if (resp.ok) {
-      pinnedModel = model;
-      diag.model = model;
-      break;
-    }
-    const errText = (await resp.text()).slice(0, 300);
-    diag.lastError = `${model}: HTTP ${resp.status} ${errText}`;
-    console.error('gemini error', model, resp.status, errText);
-    if (resp.status !== 404 && resp.status !== 400) break; // only model-name issues fall through
-  }
-  if (!resp || !resp.ok) return null;
-
-  const data = await resp.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) { diag.lastError = 'empty response from model'; return null; }
-
-  let card;
-  try { card = JSON.parse(text); } catch { diag.lastError = 'unparseable model output'; return null; }
+  const card = await generateJSON([{ text: buildPrompt(session, event) }], CARD_SCHEMA);
+  if (!card) return null;
 
   diag.lastVerdict = {
     surface: card.surface, importance: card.importance,
