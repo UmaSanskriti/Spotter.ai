@@ -1,0 +1,82 @@
+{
+  "_note": "Tiny bundled O*NET/ESCO-style excerpt: inferred role -> canonical skills with occupational importance (0..1). This is a PRIOR OVER THE RANKING, never the skill list itself (spotter.md §4.2.1). The real skill list is clustered bottom-up from the user's own transcripts; each cluster is mapped to its nearest canonical skill here to inherit an importance weight.",
+  "roles": {
+    "founder-engineer": {
+      "label": "Founder-Engineer",
+      "signals": ["startup", "founder", "cto", "ship", "mvp", "fundrais", "investor", "runway"],
+      "skills": {
+        "debugging": 0.95,
+        "system-design": 0.9,
+        "sql-analytics": 0.75,
+        "code-review": 0.85,
+        "persuasive-writing": 0.8,
+        "financial-modeling": 0.7,
+        "negotiation": 0.6
+      }
+    },
+    "software-engineer": {
+      "label": "Software Engineer",
+      "signals": ["engineer", "developer", "programming", "backend", "frontend", "fullstack"],
+      "skills": {
+        "debugging": 0.95,
+        "system-design": 0.85,
+        "code-review": 0.9,
+        "sql-analytics": 0.7,
+        "testing": 0.75,
+        "algorithms": 0.7,
+        "technical-writing": 0.55
+      }
+    },
+    "data-scientist": {
+      "label": "Data Scientist",
+      "signals": ["data scien", "machine learning", "ml", "model", "statistic", "pandas", "notebook"],
+      "skills": {
+        "statistical-analysis": 0.95,
+        "sql-analytics": 0.85,
+        "experiment-design": 0.9,
+        "debugging": 0.7,
+        "data-viz": 0.65,
+        "technical-writing": 0.6
+      }
+    },
+    "pharma-researcher": {
+      "label": "Pharmaceutical Researcher",
+      "signals": ["pharma", "clinical", "dose", "assay", "regulatory", "gxp", "compound", "in vitro"],
+      "skills": {
+        "experiment-design": 0.95,
+        "statistical-analysis": 0.9,
+        "regulatory-writing": 0.9,
+        "literature-synthesis": 0.8,
+        "data-viz": 0.55
+      }
+    },
+    "product-manager": {
+      "label": "Product Manager",
+      "signals": ["product manager", "roadmap", "prd", "stakeholder", "prioriti"],
+      "skills": {
+        "persuasive-writing": 0.85,
+        "sql-analytics": 0.7,
+        "system-design": 0.6,
+        "negotiation": 0.75,
+        "data-viz": 0.6
+      }
+    }
+  },
+  "canonicalSkills": {
+    "debugging": { "label": "Debugging", "why": ["verification", "career"] },
+    "system-design": { "label": "System design", "why": ["career", "trajectory"] },
+    "sql-analytics": { "label": "SQL analytics", "why": ["verification"] },
+    "code-review": { "label": "Code review", "why": ["verification"] },
+    "testing": { "label": "Testing", "why": ["verification"] },
+    "algorithms": { "label": "Algorithms", "why": ["career"] },
+    "persuasive-writing": { "label": "Persuasive writing", "why": ["career"] },
+    "technical-writing": { "label": "Technical writing", "why": ["career"] },
+    "regulatory-writing": { "label": "Regulatory writing", "why": ["career", "verification"] },
+    "financial-modeling": { "label": "Financial modeling", "why": ["verification", "career"] },
+    "negotiation": { "label": "Negotiation", "why": ["career"] },
+    "statistical-analysis": { "label": "Statistical analysis", "why": ["verification", "career"] },
+    "experiment-design": { "label": "Experiment design", "why": ["career"] },
+    "literature-synthesis": { "label": "Literature synthesis", "why": ["career"] },
+    "data-viz": { "label": "Data visualization", "why": ["verification"] }
+  }
+}

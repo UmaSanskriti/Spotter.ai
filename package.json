@@ -1,0 +1,32 @@
+{
+  "name": "spotter-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Spotter — an agent-agnostic skill-decay guardian. MCP server (Layer 2) + deterministic transcript observation (Layer 1).",
+  "type": "module",
+  "bin": {
+    "spotter": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "serve": "tsx src/cli.ts serve",
+    "serve:stdio": "tsx src/cli.ts serve --stdio",
+    "seed": "tsx src/cli.ts seed",
+    "ingest": "tsx src/cli.ts ingest",
+    "mirror": "tsx src/cli.ts mirror",
+    "ledger": "tsx src/cli.ts ledger",
+    "dev": "tsx watch src/cli.ts serve"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "better-sqlite3": "^12.11.1",
+    "ts-fsrs": "^5.4.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

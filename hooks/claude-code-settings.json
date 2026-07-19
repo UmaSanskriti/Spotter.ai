@@ -1,0 +1,22 @@
+{
+  "_comment": "Spotter one-line install for Claude Code (spotter.md §6 Layer 1 + §11). Merge these two blocks into ~/.claude/settings.json. 'mcpServers' connects the agent to Spotter's in-loop tools; 'hooks' gives deterministic observation that never depends on the model calling a tool. Adjust the absolute path to spotter-hook.sh.",
+
+  "mcpServers": {
+    "spotter": {
+      "url": "http://127.0.0.1:7777/mcp"
+    }
+  },
+
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sanskritiuma/Spotter/hooks/spotter-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

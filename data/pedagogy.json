@@ -1,0 +1,35 @@
+{
+  "_note": "Server-side pedagogy as editable data (spotter.md §6: 'the pedagogy lives server-side as data, and any agent can execute a directive'). The nightly Reflector (§5 Loop 3) is designed to rewrite THIS file and commit the diff. Each surface maps a learning-science mechanic to a plain-language instruction template. {skill} is interpolated.",
+  "surfaces": {
+    "gap": {
+      "mechanic": "Worked example -> completion problem; the 20% gap (spotter.md §3 #9, §4.3 Surface 3)",
+      "instruction": "Do ~80% of this task normally, but deliberately leave the single most pedagogically-loaded {skill} step unfinished as a `TODO(you):` with a one-line hint. Do not solve that step. Filling it is the user's rep.",
+      "probe": "Complete the TODO(you): the {skill} step I left for you.",
+      "minRetention": 0
+    },
+    "predict-reveal": {
+      "mechanic": "Generation + pretesting + calibration (spotter.md §3 #3,#6, §4.3 Surface 1 'Call your shot')",
+      "instruction": "Before you reveal your solution, ask the user for a quick prediction and a confidence level, then reveal and score their guess against your actual result.",
+      "probe": "Before I show my fix: which file/line is the culprit, and how confident are you (0-100%)?",
+      "minRetention": 0
+    },
+    "endgame": {
+      "mechanic": "Deliberate practice, drudgery removed (spotter.md §4.3 Surface 3 'Endgame mode')",
+      "instruction": "Do the boring 80% (repro, isolate logs, narrow to the suspect lines), then STOP and hand the user the decisive {skill} move: 'Your move, or mine?' Only proceed if they decline.",
+      "probe": "I've narrowed it down — what's the fix? (Your move, or mine?)",
+      "minRetention": 0.4
+    },
+    "teachback": {
+      "mechanic": "Protege effect / learning by teaching (spotter.md §3 #10, §4.3 Surface 1 'Rubber duck, reversed')",
+      "instruction": "Mid-task, ask the user to explain in one sentence WHY your approach over the obvious alternative, then grade their answer against your own reasoning.",
+      "probe": "In one sentence: why this approach for {skill} over the obvious alternative?",
+      "minRetention": 0.5
+    },
+    "ship-a-or-b": {
+      "mechanic": "Comparative judgment / interleaving (spotter.md §3 #5, §4.3 Surface 2 'Ship A or B')",
+      "instruction": "Present your solution beside one plausible alternative and ask the user which should ship. Their pick is the rep (and doubles as preference data).",
+      "probe": "A or B — which {skill} approach should ship, and why?",
+      "minRetention": 0.5
+    }
+  }
+}
