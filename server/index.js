@@ -51,7 +51,7 @@ app.post('/event', async (req, res) => {
     hook: req.query.type || raw.hook_event_name || 'PostToolUse',
     tool: raw.tool_name || raw.tool,
     input: raw.tool_input || raw.input || {},
-    summary: raw.summary,
+    summary: raw.summary || raw.last_assistant_message,
     at: Date.now(),
   };
 
