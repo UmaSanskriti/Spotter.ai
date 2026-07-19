@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotter — session</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap session-wrap">
+    <div class="topbar">
+      <div class="brand">spotter<span>.</span></div>
+      <div class="session-meta" id="meta"></div>
+    </div>
+
+    <div class="silence">
+      <div class="nums">
+        <div class="stat"><div class="n" id="seen">0</div><div class="l">agent actions</div></div>
+        <div class="stat surfaced"><div class="n" id="surfaced">0</div><div class="l">surfaced to you</div></div>
+      </div>
+      <div class="caption">The filter, not the feed.<br>Everything else stayed silent.</div>
+    </div>
+
+    <div class="ticker" id="ticker"></div>
+
+    <div id="join" class="join-panel" style="display:none">
+      <img id="qr" alt="QR code to join this session">
+      <p>Scan with your phone — cards land there while your agent works here.</p>
+      <code id="joinurl"></code>
+      <p style="margin-top:20px">Then wire your agent (one line):</p>
+      <code id="hookline"></code>
+    </div>
+
+    <div class="cards" id="cards"></div>
+    <div class="empty" id="empty" style="display:none">
+      Watching the session…<br>Cards appear only when your agent makes a decision worth your attention.
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode') || (params.get('id') ? 'live' : 'replay');
+    const sessionId = params.get('id');
+    const isHost = params.get('host') === '1';
+
+    const $ = id => document.getElementById(id);
+    const cardsEl = $('cards');
+
+    function setState(state) {
+      $('seen').textContent = state.eventsSeen;
+      $('surfaced').textContent = state.cardsSurfaced;
+    }
+
+    function tick(label) {
+      $('ticker').textContent = '· ' + label;
+    }
+
+    function statusLine(text) {
+      const el = document.createElement('div');
+      el.className = 'status-line';
+      el.textContent = text;
+      cardsEl.prepend(el);
+    }
+
+    function renderCard(card) {
+      $('empty').style.display = 'none';
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML = `
+        <div class="chips">
+          <span class="chip chip-domain">${esc(card.domain || '')}</span>
+          <span class="chip chip-imp">importance ${card.importance ?? ''}/5</span>
+        </div>
+        <h2>${esc(card.headline)}</h2>
+        <div class="what">${esc(card.what_happened)}</div>
+        <div class="why">${esc(card.why_it_matters)}</div>
+        <div class="qa">
+          <div class="q">🤔 ${esc(card.question)}</div>
+          <div class="a">${esc(card.answer)}</div>
+          <div class="qa-actions">
+            <button class="btn btn-sm btn-reveal">Think, then reveal</button>
+            <button class="btn btn-sm btn-gotit">Got it ✓</button>
+          </div>
+        </div>`;
+      const qa = el.querySelector('.qa');
+      el.querySelector('.btn-reveal').onclick = () => qa.classList.add('revealed');
+      el.querySelector('.btn-gotit').onclick = async () => {
+        qa.classList.add('done');
+        if (mode === 'live' && sessionId) {
+          fetch(`/session/${sessionId}/answer`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain: card.domain, gotIt: true }),
+          });
+        }
+      };
+      cardsEl.prepend(el);
+      if (navigator.vibrate) navigator.vibrate(80);
+    }
+
+    function levelUp(domain, level) {
+      const el = document.createElement('div');
+      el.className = 'levelup';
+      el.textContent = `⬆ ${domain} leveled up to ${level}/3`;
+      cardsEl.prepend(el);
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ---------- replay mode: the artifact any judge can open cold ----------
+    async function replay() {
+      $('meta').textContent = 'recorded session · webhook ingestion service';
+      const demo = await (await fetch('/demo')).json();
+      let seen = 0, surfaced = 0;
+      const SPEED = 1; // timeline is already compressed
+      statusLine(demo.timeline[0].text || 'Session started');
+      for (const item of demo.timeline) {
+        setTimeout(() => {
+          if (item.type === 'tick') {
+            seen++; setState({ eventsSeen: seen, cardsSurfaced: surfaced });
+            tick(`[${item.tool}] ${item.label}`);
+          } else if (item.type === 'card') {
+            seen++; surfaced++;
+            setState({ eventsSeen: seen, cardsSurfaced: surfaced });
+            renderCard(item.card);
+          } else if (item.type === 'status' && item.t > 0) {
+            statusLine(item.text);
+          }
+        }, item.t / SPEED);
+      }
+    }
+
+    // ---------- live mode: SSE off the relay ----------
+    function live() {
+      $('meta').textContent = `session ${sessionId}`;
+      $('empty').style.display = 'block';
+      if (isHost) {
+        $('join').style.display = 'block';
+        $('qr').src = `/session/${sessionId}/qr`;
+        const join = `${location.origin}/session.html?id=${sessionId}`;
+        $('joinurl').textContent = join;
+        $('hookline').textContent =
+          `export SPOTTER_URL=${location.origin} SPOTTER_SESSION=${sessionId}  # then: bash hooks/install.sh`;
+      }
+      const es = new EventSource(`/session/${sessionId}/stream`);
+      es.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.state) setState(msg.state);
+        if (msg.type === 'hello') (msg.cards || []).forEach(renderCard);
+        if (msg.type === 'tick') tick(msg.tool || 'event');
+        if (msg.type === 'card') renderCard(msg.card);
+        if (msg.type === 'levelup') levelUp(msg.domain, msg.level);
+      };
+    }
+
+    mode === 'live' && sessionId ? live() : replay();
+  </script>
+</body>
+</html>

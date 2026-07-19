@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotter — your agent codes. You still learn.</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="logo">spotter<span>.</span></div>
+      <p class="tagline">Your AI agent does the work. Spotter watches the session,<br>
+        picks the decisions worth understanding, and streams them to your second screen —<br>
+        so you come out of every delegated task knowing more, not less.</p>
+
+      <div class="cta-col">
+        <a class="btn btn-primary" href="/session.html?mode=replay">▶ &nbsp;Watch a live session</a>
+        <button class="btn btn-ghost" id="start">Start your own session</button>
+      </div>
+    </div>
+
+    <div class="how">
+      <div class="how-step"><b>1 · Observe</b><span>A one-line hook streams your Claude Code (or any agent's) session to Spotter. No agent modified.</span></div>
+      <div class="how-step"><b>2 · Filter</b><span>Gemini judges every decision against <i>your</i> profile: does this matter, and is it above your level? It made 47 moves — you see 5. Silence is a feature.</span></div>
+      <div class="how-step"><b>3 · Learn</b><span>Cards land on your phone or second monitor while the agent grinds: what happened, why it matters, one question. Dead air becomes expertise.</span></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('start').onclick = async () => {
+      const r = await fetch('/session', { method: 'POST' });
+      const { id } = await r.json();
+      location.href = `/session.html?id=${id}&mode=live&host=1`;
+    };
+  </script>
+</body>
+</html>
