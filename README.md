@@ -66,6 +66,32 @@ command = "npx"
 args = ["tsx", "/Users/sanskritiuma/Spotter/src/cli.ts", "serve", "--stdio"]
 ```
 
+## The desktop UI (Layer 3)
+
+The menu-bar app and all its screens (spotter.md §4.2–4.6). Two ways to run it:
+
+**As a web UI (fastest — just a browser):** the Spotter server serves the whole UI.
+```bash
+npx tsx src/cli.ts seed        # load demo data
+npx tsx src/cli.ts serve       # then open http://127.0.0.1:7777/
+```
+Routes: `/#/mirror` (Delegation Mirror + auto-charter), `/#/ledger` (ledger + settings:
+budget slider, Pause, per-skill 🔒/👁/📦 override), `/#/digest` (weekly Skill Health),
+`/#/popover` (the compact menu-bar popover), `/#/waitcard?skill=<id>` (a wait-card:
+Call-your-shot / the Veil / Ship-A-or-B, chosen by skill + retention).
+
+**As the native menu-bar app (Electron):** tray icon with a live health ring, a popover,
+wait-cards that slide in at a screen corner without stealing focus, a global pull hotkey
+`⌘⇧S`, and a presenting-mode `⌘⇧P` that suppresses everything (screen-share taste).
+```bash
+cd desktop && npm install && npm start
+```
+It auto-starts the Spotter server if one isn't already running.
+
+The UI reads a small JSON API on the same server: `GET /api/state`, `/api/mirror`,
+`/api/ledger`, `/api/digest`, `/api/wait-card`, and `POST /api/grade`, `/api/charter`,
+`/api/budget`, `/api/pause`, `/api/seed`.
+
 ## The MCP tool surface (Layer 2)
 
 | Tool | Purpose |
@@ -115,10 +141,12 @@ Flagged (see spotter.md §13 verification checklist):
   and is exercised end-to-end by `seed`. Confirm field names against a real install.
 - ⚠️ **Codex CLI** adapter is built to the documented rollout format; `codex` is
   installed here but had written no session yet, so it's **unvalidated live** too.
-- 🚧 **Layer 3 (tray app)** — wait-cards, the Veil, voice probes, menu-bar sparkline,
-  screen-share suppression. These **cannot** live in an MCP server (MCP servers can't
-  initiate, don't see the conversation, and rely on inconsistent tool-call compliance).
-  The server is designed so the tray app can drive all of it. Not in this repo yet.
+- ✅ **Layer 3 (desktop UI)** — now built: the web UI (Mirror, popover, wait-cards,
+  ledger, digest) served live from the local service, plus an Electron menu-bar shell
+  (tray health ring, slide-in wait-cards, `⌘⇧S` pull, `⌘⇧P` presenting-suppression).
+  These correctly live *outside* MCP, which can't initiate or render UI. Remaining: voice
+  probes (needs local ASR) and automatic screen-recording detection (manual `⌘⇧P` today —
+  macOS has no public API for it; production would hook ScreenCaptureKit).
 - 🚧 **Nightly Reflector** — pedagogy is stored as editable data so it *can* self-edit;
   the reflection job itself isn't built.
 - 🚧 **Bandit** — Loop 2 is a deterministic retention-tiered policy for now.

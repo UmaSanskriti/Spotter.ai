@@ -1,0 +1,16 @@
+{
+  "name": "spotter-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Spotter menu-bar app (Layer 3) — tray icon, popover, wait-cards. Hosts the web UI served by the Spotter local service.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "dependencies": {
+    "menubar": "^9.5.1"
+  }
+}

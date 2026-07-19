@@ -7,3 +7,4 @@ corpus/fixtures/
 *.db
 *.db-wal
 *.db-shm
+desktop/node_modules/

@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { Store } from "../db/store.js";
 import { buildMcpServer } from "./server.js";
 import { recordDelegation } from "../core/ledger.js";
+import { handleApiOrStatic } from "../api/rest.js";
 import type { EventSource } from "../core/types.js";
 import { HTTP_HOST, HTTP_PORT, MCP_PATH } from "../config.js";
 
@@ -63,7 +64,10 @@ export async function startHttp(store: Store): Promise<http.Server> {
       return;
     }
 
+    // Layer 3 UI: JSON API under /api/* and static UI everywhere else.
     if (url.pathname !== MCP_PATH) {
+      const handled = await handleApiOrStatic(store, req, res, url);
+      if (handled) return;
       res.writeHead(404).end("Not found");
       return;
     }

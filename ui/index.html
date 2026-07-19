@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spotter</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- The whole app is one hash-routed SPA. Electron loads specific hashes:
+         #/popover for the tray, #/waitcard for slide-in cards; the main window
+         uses #/mirror, #/ledger, #/digest (spotter.md §4.6). -->
+    <div id="app" data-view="loading">
+      <div class="loading">
+        <div class="claw-mark">🐾</div>
+        <p>Waking Spotter…</p>
+      </div>
+    </div>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
