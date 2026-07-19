@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotter — demo</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/demo.css">
+</head>
+<body class="demo-body">
+  <div class="demo-topbar glass">
+    <a class="brand" href="/">spotter<span>.</span></a>
+    <div class="demo-sub">The agent works in the terminal. You learn on the Spotter screen. Watch both.</div>
+    <button class="btn btn-sm btn-ghost" id="restart">↺ Restart demo</button>
+    <button class="btn btn-sm btn-ghost btn-toggle" id="toggle">📱 Android preview</button>
+  </div>
+
+  <div class="stage">
+    <!-- LEFT: Gemini CLI running the delegated task -->
+    <section class="gcli">
+      <div class="gcli-bar"><i></i><i></i><i></i><span>gemini</span></div>
+      <div class="gcli-head">✦ Gemini CLI</div>
+      <div class="gcli-model">gemini-3.1-pro · ~/webhook-service</div>
+      <div class="gcli-out" id="term"></div>
+    </section>
+
+    <!-- RIGHT: the Spotter screen, PC by default, Android on toggle -->
+    <section class="screens">
+      <div class="pcframe" id="pc">
+        <div class="pc-chrome"><i></i><i></i>
+          <div class="pc-url">spotter.app/session/8f3a</div>
+        </div>
+        <div class="sp-ui">
+          <div class="sp-ui-head">
+            <div class="sp-ui-brand">spotter<span>.</span></div>
+            <div class="sp-count"><b id="pc-seen">0</b> moves · <b class="sf" id="pc-sf">0</b> surfaced</div>
+          </div>
+          <div class="sp-feed" id="pc-feed">
+            <div class="sp-hint">Watching the session…<br>Cards appear only for decisions above your level.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phoneframe" id="phone" style="display:none">
+        <div class="ph-screen">
+          <div class="ph-notch"></div>
+          <div class="ph-status"><span>2:14</span><span>▲ ●●● ▮</span></div>
+          <div class="sp-ui">
+            <div class="sp-ui-head">
+              <div class="sp-ui-brand">spotter<span>.</span></div>
+              <div class="sp-count"><b id="ph-seen">0</b> · <b class="sf" id="ph-sf">0</b></div>
+            </div>
+            <div class="sp-feed" id="ph-feed">
+              <div class="sp-hint">Watching the session…<br>Cards land here while the agent works.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const term = $('term');
+    const SPEED = 1.5;           // compress the recorded timeline
+    let timers = [];
+    let seen = 0, surfaced = 0;
+
+    const TOOL_NAMES = { Read: 'ReadFile', Write: 'WriteFile', Edit: 'Edit', Bash: 'Shell', Grep: 'SearchText' };
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function schedule(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+    // ---------- terminal ----------
+    let cursorEl = null;
+    function termLine(cls, html) {
+      if (cursorEl) cursorEl.classList.remove('gl-cursor');
+      const el = document.createElement('div');
+      el.className = 'gl ' + cls;
+      el.innerHTML = html;
+      term.appendChild(el);
+      cursorEl = el;
+      el.classList.add('gl-cursor');
+      term.scrollTop = term.scrollHeight;
+      return el;
+    }
+
+    function typeUserLine(text, done) {
+      const el = termLine('gl-user', '&gt; ');
+      let i = 0;
+      (function tick() {
+        if (i < text.length) {
+          el.innerHTML = '&gt; ' + esc(text.slice(0, ++i));
+          term.scrollTop = term.scrollHeight;
+          timers.push(setTimeout(tick, 28));
+        } else done();
+      })();
+    }
+
+    // ---------- spotter screens (render into both; toggle shows one) ----------
+    function setCounts() {
+      $('pc-seen').textContent = seen; $('ph-seen').textContent = seen;
+      $('pc-sf').textContent = surfaced; $('ph-sf').textContent = surfaced;
+    }
+
+    function renderCard(card) {
+      for (const feedId of ['pc-feed', 'ph-feed']) {
+        const feed = $(feedId);
+        feed.querySelector('.sp-hint')?.remove();
+        const el = document.createElement('div');
+        el.className = 'd-card';
+        el.innerHTML = `
+          <div class="chips">
+            <span class="chip chip-domain">${esc(card.domain)}</span>
+            <span class="chip chip-imp">importance ${card.importance}/5</span>
+          </div>
+          <h3>${esc(card.headline)}</h3>
+          <div class="what">${esc(card.what_happened)}</div>
+          <div class="why">${esc(card.why_it_matters)}</div>
+          <div class="q">🤔 ${esc(card.question)}</div>`;
+        feed.prepend(el);
+      }
+    }
+
+    // ---------- the show ----------
+    async function play() {
+      timers.forEach(clearTimeout); timers = [];
+      term.innerHTML = ''; cursorEl = null;
+      seen = 0; surfaced = 0; setCounts();
+      for (const feedId of ['pc-feed', 'ph-feed']) {
+        $(feedId).innerHTML = '<div class="sp-hint">Watching the session…<br>Cards appear only for decisions above your level.</div>';
+      }
+
+      const demo = await (await fetch('/demo')).json();
+
+      typeUserLine('build a webhook ingestion service for Stripe payments', () => {
+        termLine('gl-spot', '◉ spotter connected — session 8f3a, streaming to your second screen');
+        schedule(() => termLine('gl-think', '✦ Planning: ack fast, verify signatures, process async…'), 900);
+
+        for (const item of demo.timeline) {
+          const t = 1600 + item.t / SPEED;
+          if (item.type === 'tick') {
+            schedule(() => {
+              seen++; setCounts();
+              const tool = TOOL_NAMES[item.tool] || item.tool;
+              termLine('gl-tool', `<b>✔</b> ${esc(tool)} <span style="color:#8b96ab">${esc(item.label.replace(/^[A-Za-z]+ /, ''))}</span>`);
+            }, t);
+          } else if (item.type === 'card') {
+            schedule(() => { seen++; surfaced++; setCounts(); renderCard(item.card); }, t);
+          } else if (item.type === 'status' && item.t > 0) {
+            schedule(() => {
+              termLine('gl-done', '✦ Done — webhook service ready. 47 actions taken.');
+              for (const feedId of ['pc-feed', 'ph-feed']) {
+                const el = document.createElement('div');
+                el.className = 'sp-hint';
+                el.textContent = '47 actions. 5 surfaced. That’s the product — the filter, not the feed.';
+                $(feedId).prepend(el);
+              }
+            }, t);
+          }
+        }
+      });
+    }
+
+    // ---------- controls ----------
+    let android = false;
+    $('toggle').onclick = () => {
+      android = !android;
+      $('pc').style.display = android ? 'none' : 'flex';
+      $('phone').style.display = android ? 'flex' : 'none';
+      $('toggle').textContent = android ? '💻 Desktop preview' : '📱 Android preview';
+      $('toggle').classList.toggle('active', android);
+    };
+    $('restart').onclick = play;
+
+    play();
+  </script>
+</body>
+</html>
