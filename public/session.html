@@ -23,17 +23,46 @@
 
     <div class="ticker" id="ticker"></div>
 
-    <div id="join" class="join-panel glass" style="display:none">
-      <img id="qr" alt="QR code to join this session">
-      <p>Scan with your phone — cards land there while your agent works here.</p>
-      <code id="joinurl"></code>
-      <p style="margin-top:20px">Then wire your agent (one line):</p>
-      <code id="hookline"></code>
-    </div>
-
+    <!-- Cards live directly under the stats; the wire-up guide sits below and gets pushed down. -->
     <div class="cards" id="cards"></div>
     <div class="empty" id="empty" style="display:none">
       Watching the session…<br>Cards appear only when your agent makes a decision worth your attention.
+    </div>
+
+    <div id="join" class="wire-panel glass" style="display:none">
+      <h3>Wire your terminal to this session</h3>
+
+      <div class="wire-step">
+        <span class="wire-num">1</span>
+        <div class="wire-body">
+          <p>In the project you'll be coding in, paste this
+            <span class="wire-hint">(needs a local clone of the Spotter.ai repo for the hook script)</span>:</p>
+          <div class="wire-codewrap">
+            <pre><code id="hookline"></code></pre>
+            <button class="btn btn-sm btn-copy" id="copycmd">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wire-step">
+        <span class="wire-num">2</span>
+        <div class="wire-body">
+          <p>Start your coding agent in that same project and give it a real task:</p>
+          <div class="wire-codewrap"><pre><code>claude</code></pre></div>
+        </div>
+      </div>
+
+      <div class="wire-step">
+        <span class="wire-num">3</span>
+        <div class="wire-body">
+          <p>Come back here. Every action your agent takes is analyzed; the few decisions worth
+            <i>your</i> attention surface above as cards, ~5–10s after each edit. Most actions stay
+            silent — that's the filter working.</p>
+        </div>
+      </div>
+
+      <p class="wire-foot">Prefer your phone? Open <a id="joinurl" target="_blank"></a> on it —
+        same cards, live.</p>
     </div>
   </div>
 
@@ -224,11 +253,20 @@
       $('empty').style.display = 'block';
       if (isHost) {
         $('join').style.display = 'block';
-        $('qr').src = `/session/${sessionId}/qr`;
         const join = `${location.origin}/session.html?id=${sessionId}`;
         $('joinurl').textContent = join;
-        $('hookline').textContent =
-          `export SPOTTER_URL=${location.origin} SPOTTER_SESSION=${sessionId}  # then: bash hooks/install.sh`;
+        $('joinurl').href = join;
+        const cmd = [
+          `export SPOTTER_URL=${location.origin}`,
+          `export SPOTTER_SESSION=${sessionId}`,
+          `bash /path/to/Spotter.ai/hooks/install.sh`,
+        ].join('\n');
+        $('hookline').textContent = cmd;
+        $('copycmd').onclick = async () => {
+          try { await navigator.clipboard.writeText(cmd); } catch {}
+          $('copycmd').textContent = 'Copied ✓';
+          setTimeout(() => { $('copycmd').textContent = 'Copy'; }, 1600);
+        };
       }
       const es = new EventSource(`/session/${sessionId}/stream`);
       es.onmessage = e => {

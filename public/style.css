@@ -233,14 +233,34 @@ body {
 .status-line { text-align: center; color: var(--muted); font-size: 14px; padding: 10px 0; font-style: italic; }
 .levelup { text-align: center; color: #d96a4e; font-weight: 800; font-size: 14px; padding: 10px; animation: slidein .4s ease; }
 
-/* ---------- join / QR ---------- */
-.join-panel { text-align: center; padding: 26px; margin-bottom: 16px; }
-.join-panel img { border-radius: 18px; border: 8px solid #fff; width: 220px; height: 220px; box-shadow: var(--shadow); }
-.join-panel p { color: var(--muted); margin-top: 14px; font-size: 14px; font-weight: 600; }
-.join-panel code {
-  display: block; margin-top: 10px; background: var(--glass-strong); border: 1px solid var(--glass-border);
-  border-radius: 12px; padding: 10px; font-size: 12px; word-break: break-all; color: var(--accent);
+/* ---------- wire-up guide (host view; sits below the cards and gets pushed down) ---------- */
+.wire-panel { padding: 24px 26px; margin-top: 16px; }
+.wire-panel h3 { font-size: 19px; letter-spacing: -.3px; margin-bottom: 16px; }
+.wire-step { display: flex; gap: 14px; margin-bottom: 16px; }
+.wire-num {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 800; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
 }
+.wire-body { flex: 1; min-width: 0; }
+.wire-body p { color: var(--muted); font-size: 14.5px; line-height: 1.55; margin-bottom: 8px; }
+.wire-hint { font-size: 12.5px; opacity: .75; }
+.wire-codewrap { position: relative; }
+.wire-codewrap pre {
+  background: #232838; border-radius: 12px; padding: 12px 14px; overflow-x: auto;
+}
+.wire-codewrap code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+  color: #d6e2ff; line-height: 1.6; white-space: pre;
+}
+.btn-copy {
+  position: absolute; top: 8px; right: 8px; padding: 5px 12px; font-size: 12px;
+  background: rgba(255, 255, 255, .12); color: #fff; border: 1px solid rgba(255, 255, 255, .2);
+  box-shadow: none;
+}
+.btn-copy:hover { background: rgba(255, 255, 255, .22); }
+.wire-foot { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.wire-foot a { color: var(--accent); word-break: break-all; }
 
 .empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 15px; line-height: 1.6; }
 
