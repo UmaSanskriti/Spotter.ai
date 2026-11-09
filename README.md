@@ -1,5 +1,7 @@
 # Spotter
 
+> Archived hackathon prototype. For my current work on learning alongside AI, see [Mantis](https://github.com/UmaSanskriti/mantis).
+
 **Your AI agent does the work. Spotter makes sure you still learn from it.**
 
 Spotter watches your coding agent's session in real time, decides which of its decisions are
